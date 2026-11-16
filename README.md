@@ -59,6 +59,7 @@ The remote admin command asks for credentials interactively, hashes the password
 - Sign in as Super Admin, add users with exactly one of `DATA_ENTRY`, `ADMIN`, `SUPER_ADMIN`.
 - Add customers, drivers, mix types, vehicles, and optional pumps through the five master-data tabs.
 - Create invoices with searchable reference selectors, manual pour-location/chemical fields, quantities, times, and receiver. Quantities accept up to three decimal places and a maximum of 999999.999 per invoice.
+- Each invoice has a unique, permanent serial number such as `INV-000001`. The same number appears in the invoice list, audit history, preview, and printed receipt; edits and reprints retain it.
 - Saving opens the invoice details. “معاينة الطباعة” saves the current form and opens its printable receipt without marking it printed. Viewing an existing preview performs no writes.
 - Admin and Super Admin can filter invoices by customer, driver, and date range. Results paginate in groups of 20. Data Entry can view the list and details and preview receipts, without filtering, editing, or recording a print action.
 - “طباعة” records the first printed timestamp and invokes the browser print dialog. Canceling that dialog does not undo the recorded print action. Admin cannot edit the invoice afterward; Super Admin can.

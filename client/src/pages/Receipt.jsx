@@ -87,6 +87,7 @@ export default function Receipt() {
           <div className="receipt-main">
             <div className="receipt-data">
               {[
+                ["رقم الفاتورة", <bdi dir="ltr">{row.number}</bdi>],
                 ["التاريخ", row.date.split("-").reverse().join("/")],
                 ["اسم المستهلك", row.customer_name],
                 ["مكان الصب", row.pour_location],
