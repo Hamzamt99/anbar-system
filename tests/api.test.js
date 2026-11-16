@@ -209,6 +209,97 @@ test("server quantities, exact decimals, deterministic ordering and reset by dat
     status: 400,
   });
 });
+test("invoices require exactly the specified manual fields and allow omitted optional fields", async () => {
+  const minimal = invoice({ date: "2026-12-01" });
+  for (const key of [
+    "arrival",
+    "finish",
+    "receiver",
+    "chemicals",
+    "added_water",
+  ])
+    delete minimal[key];
+  const row = (await call("/invoices", { method: "POST", body: minimal })).data;
+  for (const key of [
+    "arrival",
+    "finish",
+    "receiver",
+    "chemicals",
+    "added_water",
+  ])
+    assert.equal(row[key], "");
+  assert.equal(row.departure, "12:15");
+  assert.equal(row.departure_input, "12:00");
+  const savedAgain = (
+    await call("/invoices/" + row.id, { method: "PUT", body: minimal })
+  ).data;
+  assert.equal(savedAgain.departure, "12:15");
+  const midnight = { ...minimal, departure: "23:50" };
+  const adjusted = (
+    await call("/invoices/" + row.id, { method: "PUT", body: midnight })
+  ).data;
+  assert.equal(adjusted.departure, "00:05");
+  assert.equal(adjusted.departure_input, "23:50");
+  assert.equal(adjusted.date, minimal.date);
+  const repeated = (
+    await call("/invoices/" + row.id, {
+      method: "PUT",
+      body: { ...midnight, receiver: "مستلم اختياري" },
+    })
+  ).data;
+  assert.equal(repeated.departure, "00:05");
+  assert.equal(repeated.arrival, "");
+  await call("/invoices", {
+    method: "POST",
+    body: { ...minimal, departure_input: "10:00" },
+    status: 400,
+  });
+  // Legacy records retain their historical departure on unrelated edits.
+  await db
+    .prepare("UPDATE invoices SET departure=?,departure_input=NULL WHERE id=?")
+    .bind("08:00", row.id)
+    .run();
+  const legacy = (
+    await call("/invoices/" + row.id, {
+      method: "PUT",
+      body: { ...minimal, departure: "08:00" },
+    })
+  ).data;
+  assert.equal(legacy.departure, "08:00");
+  const legacyChanged = (
+    await call("/invoices/" + row.id, {
+      method: "PUT",
+      body: { ...minimal, departure: "08:10" },
+    })
+  ).data;
+  assert.equal(legacyChanged.departure, "08:25");
+  for (const key of [
+    "customer_id",
+    "pour_location",
+    "date",
+    "driver_id",
+    "vehicle_id",
+    "pump_id",
+    "requested",
+    "truck_load",
+    "departure",
+    "mix_type_id",
+  ]) {
+    const invalid = { ...minimal };
+    delete invalid[key];
+    await call("/invoices", { method: "POST", body: invalid, status: 400 });
+  }
+  await call("/invoices", {
+    method: "POST",
+    body: { ...minimal, finish: "25:00" },
+    status: 400,
+  });
+  await call("/invoices", {
+    method: "POST",
+    body: { ...minimal, arrival: "25:00" },
+    status: 400,
+  });
+});
 test("parallel invoice writes maintain correct integer totals", async () => {
   const created = await Promise.all(
     Array.from({ length: 8 }, () =>
@@ -336,7 +427,7 @@ test("API validation and server-side invoice filters", async () => {
     { truck_load: "1.0001" },
     { departure: "25:00" },
     { customer_id: 999999 },
-    { receiver: "" },
+    { pump_id: null },
   ])
     await call("/invoices", {
       method: "POST",

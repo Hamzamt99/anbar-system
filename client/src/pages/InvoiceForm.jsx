@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api, masterTypes, amount } from "../api";
+import { addDepartureOffset } from "../../../shared/time.js";
 import { useAuth } from "../main";
 import { Title, Field, SearchSelect, ErrorBox } from "../components/UI";
 const today = () =>
@@ -61,6 +62,7 @@ export default function InvoiceForm() {
     [busy, setBusy] = useState(false),
     [loading, setLoading] = useState(true),
     [printed, setPrinted] = useState(false),
+    [legacyDeparture, setLegacyDeparture] = useState(null),
     [notice, setNotice] = useState("");
   useEffect(() => {
     let alive = true;
@@ -85,13 +87,22 @@ export default function InvoiceForm() {
           }
           setForm(
             Object.fromEntries(
-              Object.keys(initial()).map((k) => [k, row[k] ?? ""]),
+              Object.keys(initial()).map((k) => [
+                k,
+                k === "departure"
+                  ? (row.departure_input ?? row.departure)
+                  : (row[k] ?? ""),
+              ]),
             ),
           );
           setPrinted(!!row.printed_at);
+          setLegacyDeparture(
+            row.departure_input == null ? row.departure : null,
+          );
         } else {
           setForm(initial());
           setPrinted(false);
+          setLegacyDeparture(null);
         }
         setMasters(data);
         setError("");
@@ -138,8 +149,7 @@ export default function InvoiceForm() {
     setNotice("");
     try {
       for (const [k, , label] of refs)
-        if (k !== "pump_id" && !form[k])
-          throw new Error(`يرجى اختيار ${label}`);
+        if (!form[k]) throw new Error(`يرجى اختيار ${label}`);
       const body = { ...form, pump_id: form.pump_id || null };
       const r = await api("/invoices" + (id ? "/" + id : ""), {
         method: id ? "PUT" : "POST",
@@ -169,7 +179,7 @@ export default function InvoiceForm() {
             <SearchSelect
               key={key}
               label={label}
-              required={key !== "pump_id"}
+              required
               items={masters[path] || []}
               value={form[key]}
               onChange={(value) => setForm((f) => ({ ...f, [key]: value }))}
@@ -218,25 +228,32 @@ export default function InvoiceForm() {
           />
         </Section>
         <Section title="أوقات الحمولة" kind="times">
-          {input("departure", "ساعة مغادرة المصنع", {
-            type: "time",
-            required: true,
-          })}
-          {input("arrival", "ساعة الوصول إلى موقع الصب", {
-            type: "time",
-            required: true,
-          })}
-          {input("finish", "ساعة انتهاء تفريغ الحمولة", {
-            type: "time",
-            required: true,
-          })}
+          <div className="departure-field">
+            {input("departure", "ساعة مغادرة المصنع", {
+              type: "time",
+              required: true,
+            })}
+            <small className="departure-hint" role="status">
+              وقت المغادرة المسجل:{" "}
+              <bdi dir="ltr">
+                {form.departure === legacyDeparture
+                  ? form.departure
+                  : addDepartureOffset(form.departure) || "—"}
+              </bdi>
+              {form.departure === legacyDeparture
+                ? ""
+                : " (إضافة 15 دقيقة تلقائياً)"}
+            </small>
+          </div>
+          {input("arrival", "ساعة الوصول إلى موقع الصب", { type: "time" })}
+          {input("finish", "ساعة انتهاء تفريغ الحمولة", { type: "time" })}
         </Section>
         <Section title="بيانات إضافية" kind="extras">
           {input("chemicals", "المواد الكيميائية", { maxLength: 200 })}
           {input("added_water", "زيادة الماء حسب طلب العميل", {
             maxLength: 200,
           })}
-          {input("receiver", "اسم المستلم", { required: true, maxLength: 200 })}
+          {input("receiver", "اسم المستلم", { maxLength: 200 })}
         </Section>
         <div className="buttons form-buttons">
           <button

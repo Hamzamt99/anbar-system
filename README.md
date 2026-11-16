@@ -57,7 +57,7 @@ The remote admin command asks for credentials interactively, hashes the password
 ## Application workflows
 
 - Sign in as Super Admin, add users with exactly one of `DATA_ENTRY`, `ADMIN`, `SUPER_ADMIN`.
-- Add customers, drivers, mix types, vehicles, and optional pumps through the five master-data tabs.
+- Add customers, drivers, mix types, vehicles, and pumps through the five master-data tabs.
 - Create invoices with searchable reference selectors, manual pour-location/chemical fields, quantities, times, and receiver. Quantities accept up to three decimal places and a maximum of 999999.999 per invoice.
 - Each invoice has a unique, permanent serial number such as `INV-000001`. The same number appears in the invoice list, audit history, preview, and printed receipt; edits and reprints retain it.
 - Saving opens the invoice details. “معاينة الطباعة” saves the current form and opens its printable receipt without marking it printed. Viewing an existing preview performs no writes.
@@ -97,7 +97,7 @@ npx wrangler deploy --dry-run --outdir tmp/worker-build
 npm audit
 ```
 
-`npm test` uses an isolated Miniflare D1 database with the real migrations and Express routes; it does not substitute a SQLite file or mock database. Ten test groups cover authentication, cookies, CSRF, role permissions, master-data constraints, integer decimal quantities, customer/date resets, concurrent creation, old/new group recalculation, snapshot history, print locks, input validation, filtering, user lifecycle, logout, and session revocation.
+`npm test` uses an isolated Miniflare D1 database with the real migrations and Express routes; it does not substitute a SQLite file or mock database. Eleven test groups cover authentication, cookies, CSRF, role permissions, master-data constraints, integer decimal quantities, customer/date resets, concurrent creation, old/new group recalculation, snapshot history, print locks, input validation, filtering, user lifecycle, logout, and session revocation.
 
 `npm run test:browser` builds the app, applies migrations to a disposable local D1, generates a random temporary test credential, and runs Chromium against a real Wrangler Worker on port 8788. It exercises all master tabs, invoice creation and preview, user creation, list filters, role route protection, mobile width, and print styles. Screenshots of all screens go to ignored `tmp/screenshots`. Invoice filter selectors include deleted customers and drivers for historical searches; new-invoice selectors show active records only. The test removes its disposable D1 state and credentials afterward; normal local and remote data remain untouched.
 
@@ -105,7 +105,7 @@ npm audit
 
 ## Deployment status
 
-Local migration, all ten API test groups, the full browser workflow, the production build, and the Worker deployment dry run have passed. See [VERIFICATION.md](VERIFICATION.md) for the execution report.
+Local migration, all eleven API test groups, the full browser workflow, the production build, and the Worker deployment dry run have passed. See [VERIFICATION.md](VERIFICATION.md) for the execution report.
 
 Production D1 migrations and Worker deployment have now completed with database `04b6d257-131e-4b69-9502-fd016f55ee0d`. Application URL: https://anbar-system.anbar-system.workers.dev. Create the first production Super Admin with `npm run admin -- --remote`.
 
@@ -118,3 +118,11 @@ Super Admins can open **سجل العمليات** from the navigation or from an
 Migration `0002_invoice_audit.sql` adds the `audit_logs` table and invoice audit actor columns. Database triggers write each event atomically with the invoice mutation, so a failed audit insert also rolls back that invoice change. Actor emails are preserved independently of user accounts, and audit rows reject UPDATE and DELETE. Automatic quantity recalculation does not create misleading manual-edit events. Passwords and session tokens are never part of the invoice snapshots.
 
 Tracking begins when this migration and application update are installed. Historical edits made before audit logging existed cannot be reconstructed. Apply `npm run db:local` locally and `npm run db:remote` before deploying the update.
+
+## Required fields and departure time
+
+Only customer, pour location, date, driver, vehicle, pump, requested quantity, truck load, factory departure entry, and mix type are mandatory. Arrival time, unloading completion, chemicals, added water, and receiver name can be omitted. Previous and cumulative quantities remain automatic.
+
+The factory departure time saved and printed is the entered time **plus 15 minutes**, including midnight rollover (`23:50` becomes `00:05`). Arrival time stays optional and independent. The form displays the final departure underneath the input. The server enforces the adjustment and stores `departure_input` separately; edits reload the original entry, so saving or printing repeatedly does not add further offsets. Invoice dates remain the dates entered.
+
+Apply migration `0003_departure_input.sql` before deploying. Existing recorded departure times are preserved on unrelated edits; explicitly changing a legacy invoice's departure entry applies the new rule.

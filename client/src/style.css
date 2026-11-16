@@ -1054,3 +1054,10 @@ dialog::backdrop {
     grid-template-columns: 1fr 1fr;
   }
 }
+.departure-hint {
+  display: block;
+  margin-top: 5px;
+  font-size: 11px;
+  color: #687589;
+  line-height: 1.7;
+}

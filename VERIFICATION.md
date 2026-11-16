@@ -38,3 +38,12 @@ Initial live HTTP verification from this environment encountered a connection re
 - Production build and deployment succeeded. Worker version: `aa47872f-760f-468a-a573-ef5888ee1b5c`.
 - Live homepage returned HTTP 200; unauthenticated audit endpoint is protected.
 - Audit history starts at this update; prior edits cannot be reconstructed.
+
+## Required fields and departure offset update
+
+- Made only the ten requested invoice fields required, including pump number. Arrival, finish, receiver, chemicals, and added water can be omitted.
+- Factory departure is calculated on the server as entered time plus 15 minutes; arrival is independent. Stored the original entry separately to prevent repeated adjustments on edits/reprints. Legacy recorded times remain unchanged on unrelated edits.
+- All 11 API test groups passed. Added coverage for omitted optional fields, each missing required field, departure offset, midnight rollover, repeated saves, legacy records, and invalid optional times.
+- Full Chromium workflow passed with empty finish/receiver fields, required pump accessibility, displayed/printed adjusted time, and editing without an additional offset. Visual form review passed.
+- Migration `0003_departure_input.sql` applied to local and production D1.
+- Production build and deployment passed; version `ec1116ca-80fa-4256-a4f9-16e842d551ff`.

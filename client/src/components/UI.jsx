@@ -130,6 +130,7 @@ export function SearchSelect({
           id={id}
           aria-label={label}
           role="combobox"
+          aria-required={required}
           autoComplete="off"
           aria-expanded={open}
           aria-controls={listId}

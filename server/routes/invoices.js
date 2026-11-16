@@ -10,6 +10,7 @@ import {
 } from "../validation/index.js";
 import {
   serialize,
+  departureValues,
   snapshots,
   invoiceColumns as cols,
 } from "../services/invoices.js";
@@ -93,7 +94,7 @@ export function invoiceRoutes(db) {
   r.post("/", async (req, res) => {
     const v = parse(invoiceInput, req.body),
       names = await snapshots(db, v),
-      all = { ...v, ...names };
+      all = { ...v, ...names, ...departureValues(v.departure) };
     const x = await db
       .prepare(
         `INSERT INTO invoices(${cols.join(",")},created_by,audit_actor_id,audit_actor_email) VALUES(${cols.map(() => "?").join(",")},?,?,?)`,
@@ -121,7 +122,11 @@ export function invoiceRoutes(db) {
     if (!old) throw fail(404, "الفاتورة غير موجودة");
     if (old.printed_at && req.user.role !== "SUPER_ADMIN")
       throw fail(403, "لا يمكن تعديل الفاتورة بعد طباعتها");
-    const all = { ...v, ...(await snapshots(db, v, old)) };
+    const all = {
+      ...v,
+      ...(await snapshots(db, v, old)),
+      ...departureValues(v.departure, old),
+    };
     const x = await db
       .prepare(
         `UPDATE invoices SET ${cols.map((k) => `${k}=?`).join(",")},audit_actor_id=?,audit_actor_email=?,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=? AND (printed_at IS NULL OR ?='SUPER_ADMIN')`,

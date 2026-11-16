@@ -63,17 +63,23 @@ export const invoiceInput = z
     driver_id: id,
     mix_type_id: id,
     vehicle_id: id,
-    pump_id: z.union([id, z.null()]).optional().default(null),
+    pump_id: id,
     date,
     pour_location: text,
     requested: quantity,
     truck_load: quantity,
     departure: time,
-    arrival: time,
-    finish: time,
+    arrival: z
+      .union([time, z.literal("")])
+      .optional()
+      .default(""),
+    finish: z
+      .union([time, z.literal("")])
+      .optional()
+      .default(""),
     chemicals: z.string().trim().max(200).default(""),
     added_water: z.string().trim().max(200).default(""),
-    receiver: text,
+    receiver: z.string().trim().max(200).optional().default(""),
   })
   .strict();
 export const filters = z

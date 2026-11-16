@@ -12,7 +12,7 @@
     "admin": "node scripts/create-admin.js",
     "test": "node --test tests/*.test.js",
     "test:browser": "npm run build && node scripts/browser-test.js",
-    "format": "prettier --write client/src server scripts tests vite.config.js wrangler.jsonc package.json"
+    "format": "prettier --write client/src server shared scripts tests vite.config.js wrangler.jsonc package.json"
   },
   "dependencies": {
     "@fontsource/amiri": "^5.2.0",

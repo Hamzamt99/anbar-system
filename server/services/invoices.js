@@ -1,3 +1,4 @@
+import { addDepartureOffset } from "../../shared/time.js";
 import { fail } from "../validation/index.js";
 const refs = [
   ["customer", "customers"],
@@ -55,9 +56,17 @@ export const invoiceColumns = [
   "requested",
   "truck_load",
   "departure",
+  "departure_input",
   "arrival",
   "finish",
   "chemicals",
   "added_water",
   "receiver",
 ];
+
+export function departureValues(value, old) {
+  if (old && old.departure_input == null && value === old.departure) {
+    return { departure: old.departure, departure_input: null };
+  }
+  return { departure: addDepartureOffset(value), departure_input: value };
+}

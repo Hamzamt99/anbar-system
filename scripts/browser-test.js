@@ -122,8 +122,20 @@ try {
   await page.getByLabel("حمولة السيارة").fill("12");
   await page.getByLabel("ساعة مغادرة المصنع").fill("15:46");
   await page.getByLabel("ساعة الوصول إلى موقع الصب").fill("16:10");
-  await page.getByLabel("ساعة انتهاء تفريغ الحمولة").fill("16:30");
-  await page.getByLabel("اسم المستلم").fill("محمد أحمد");
+  assert.equal(
+    await page.getByLabel("ساعة انتهاء تفريغ الحمولة").getAttribute("required"),
+    null,
+  );
+  assert.equal(
+    await page.getByLabel("اسم المستلم").getAttribute("required"),
+    null,
+  );
+  assert.equal(
+    await page
+      .getByRole("combobox", { name: "رقم المضخة", exact: true })
+      .getAttribute("aria-required"),
+    "true",
+  );
   await page.getByLabel("المواد الكيميائية").fill("ملدن");
   await page.screenshot({ path: out + "/03-create.png", fullPage: true });
   await page
@@ -133,7 +145,12 @@ try {
   await page.locator(".receipt").waitFor();
   const invoiceId = page.url().match(/invoices\/(\d+)/)[1];
   const detail = await page.request.get(base + "/api/invoices/" + invoiceId);
-  assert.equal((await detail.json()).data.printed_at, null);
+  const savedInvoice = (await detail.json()).data;
+  assert.equal(savedInvoice.printed_at, null);
+  assert.equal(savedInvoice.departure, "16:01");
+  assert.equal(savedInvoice.departure_input, "15:46");
+  assert.equal(savedInvoice.finish, "");
+  assert.equal(savedInvoice.receiver, "");
   await page.screenshot({ path: out + "/06-receipt.png", fullPage: true });
   await page.setViewportSize({ width: 794, height: 1123 });
   await page.emulateMedia({ media: "print" });
@@ -148,9 +165,17 @@ try {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.getByRole("link", { name: "تعديل", exact: true }).click();
   await page.waitForURL("**/edit");
+  assert.equal(
+    await page.getByLabel("ساعة مغادرة المصنع").inputValue(),
+    "15:46",
+  );
   await page.getByLabel("حمولة السيارة").fill("13");
   await page.getByRole("button", { name: "حفظ الفاتورة", exact: true }).click();
   await page.waitForURL(base + "/invoices/" + invoiceId);
+  const editedInvoice = await page.request.get(
+    base + "/api/invoices/" + invoiceId,
+  );
+  assert.equal((await editedInvoice.json()).data.departure, "16:01");
   await page
     .locator(".receipt-controls")
     .getByRole("link", { name: "سجل العمليات", exact: true })
