@@ -96,9 +96,14 @@ export function invoiceRoutes(db) {
       all = { ...v, ...names };
     const x = await db
       .prepare(
-        `INSERT INTO invoices(${cols.join(",")},created_by) VALUES(${cols.map(() => "?").join(",")},?)`,
+        `INSERT INTO invoices(${cols.join(",")},created_by,audit_actor_id,audit_actor_email) VALUES(${cols.map(() => "?").join(",")},?,?,?)`,
       )
-      .bind(...cols.map((k) => all[k]), req.user.id)
+      .bind(
+        ...cols.map((k) => all[k]),
+        req.user.id,
+        req.user.id,
+        req.user.email,
+      )
       .run();
     const row = await db
       .prepare("SELECT * FROM invoices WHERE id=?")
@@ -119,9 +124,15 @@ export function invoiceRoutes(db) {
     const all = { ...v, ...(await snapshots(db, v, old)) };
     const x = await db
       .prepare(
-        `UPDATE invoices SET ${cols.map((k) => `${k}=?`).join(",")},updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=? AND (printed_at IS NULL OR ?='SUPER_ADMIN')`,
+        `UPDATE invoices SET ${cols.map((k) => `${k}=?`).join(",")},audit_actor_id=?,audit_actor_email=?,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=? AND (printed_at IS NULL OR ?='SUPER_ADMIN')`,
       )
-      .bind(...cols.map((k) => all[k]), uid, req.user.role)
+      .bind(
+        ...cols.map((k) => all[k]),
+        req.user.id,
+        req.user.email,
+        uid,
+        req.user.role,
+      )
       .run();
     if (!x.meta.changes) throw fail(403, "لا يمكن تعديل الفاتورة بعد طباعتها");
     res.json({
@@ -136,9 +147,9 @@ export function invoiceRoutes(db) {
     const uid = parse(id, req.params.id);
     const x = await db
       .prepare(
-        "UPDATE invoices SET printed_at=COALESCE(printed_at,strftime('%Y-%m-%dT%H:%M:%fZ','now')) WHERE id=?",
+        "UPDATE invoices SET audit_actor_id=?,audit_actor_email=?,printed_at=COALESCE(printed_at,strftime('%Y-%m-%dT%H:%M:%fZ','now')) WHERE id=?",
       )
-      .bind(uid)
+      .bind(req.user.id, req.user.email, uid)
       .run();
     if (!x.meta.changes) throw fail(404, "الفاتورة غير موجودة");
     res.json({

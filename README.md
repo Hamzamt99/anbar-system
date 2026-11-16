@@ -96,7 +96,7 @@ npx wrangler deploy --dry-run --outdir tmp/worker-build
 npm audit
 ```
 
-`npm test` uses an isolated Miniflare D1 database with the real migrations and Express routes; it does not substitute a SQLite file or mock database. Nine test groups cover authentication, cookies, CSRF, role permissions, master-data constraints, integer decimal quantities, customer/date resets, concurrent creation, old/new group recalculation, snapshot history, print locks, input validation, filtering, user lifecycle, logout, and session revocation.
+`npm test` uses an isolated Miniflare D1 database with the real migrations and Express routes; it does not substitute a SQLite file or mock database. Ten test groups cover authentication, cookies, CSRF, role permissions, master-data constraints, integer decimal quantities, customer/date resets, concurrent creation, old/new group recalculation, snapshot history, print locks, input validation, filtering, user lifecycle, logout, and session revocation.
 
 `npm run test:browser` builds the app, applies migrations to a disposable local D1, generates a random temporary test credential, and runs Chromium against a real Wrangler Worker on port 8788. It exercises all master tabs, invoice creation and preview, user creation, list filters, role route protection, mobile width, and print styles. Screenshots of all screens go to ignored `tmp/screenshots`. Invoice filter selectors include deleted customers and drivers for historical searches; new-invoice selectors show active records only. The test removes its disposable D1 state and credentials afterward; normal local and remote data remain untouched.
 
@@ -104,8 +104,16 @@ npm audit
 
 ## Deployment status
 
-Local migration, all nine API test groups, the full browser workflow, the production build, and the Worker deployment dry run have passed. See [VERIFICATION.md](VERIFICATION.md) for the execution report.
+Local migration, all ten API test groups, the full browser workflow, the production build, and the Worker deployment dry run have passed. See [VERIFICATION.md](VERIFICATION.md) for the execution report.
 
 Production D1 migrations and Worker deployment have now completed with database `04b6d257-131e-4b69-9502-fd016f55ee0d`. Application URL: https://anbar-system.anbar-system.workers.dev. Create the first production Super Admin with `npm run admin -- --remote`.
 
 Official integration reference: [Deploy an Express.js application on Cloudflare Workers](https://developers.cloudflare.com/workers/tutorials/deploy-an-express-app/).
+
+## Invoice audit history
+
+Super Admins can open **سجل العمليات** from the navigation or from an invoice receipt. The read-only table records invoice creation, actual edits, and every print action with the authenticated user's email, invoice ID, and timestamp. Details show field values before and after changes. Filters support invoice ID, email, action, and date range, with 20 entries per page. Times and date filters use Asia/Amman.
+
+Migration `0002_invoice_audit.sql` adds the `audit_logs` table and invoice audit actor columns. Database triggers write each event atomically with the invoice mutation, so a failed audit insert also rolls back that invoice change. Actor emails are preserved independently of user accounts, and audit rows reject UPDATE and DELETE. Automatic quantity recalculation does not create misleading manual-edit events. Passwords and session tokens are never part of the invoice snapshots.
+
+Tracking begins when this migration and application update are installed. Historical edits made before audit logging existed cannot be reconstructed. Apply `npm run db:local` locally and `npm run db:remote` before deploying the update.

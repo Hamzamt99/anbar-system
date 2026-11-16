@@ -4,6 +4,7 @@ import { authRoutes } from "./routes/auth.js";
 import { masterRoutes } from "./routes/master.js";
 import { invoiceRoutes } from "./routes/invoices.js";
 import { userRoutes } from "./routes/users.js";
+import { auditRoutes } from "./routes/audit.js";
 export function createApp(db) {
   const app = express();
   app.disable("x-powered-by");
@@ -31,6 +32,7 @@ export function createApp(db) {
   app.use("/api/auth", authRoutes(db));
   app.use("/api", auth(db));
   app.get("/api/auth/me", (req, res) => res.json({ data: req.user }));
+  app.use("/api/audit-logs", auditRoutes(db));
   app.use("/api/users", userRoutes(db));
   app.use("/api/invoices", invoiceRoutes(db));
   app.use("/api", masterRoutes(db));

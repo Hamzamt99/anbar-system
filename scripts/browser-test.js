@@ -146,6 +146,40 @@ try {
   assert.ok(height <= 1123, "Receipt exceeds one A4 page: " + height);
   await page.emulateMedia({ media: "screen" });
   await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.getByRole("link", { name: "تعديل", exact: true }).click();
+  await page.waitForURL("**/edit");
+  await page.getByLabel("حمولة السيارة").fill("13");
+  await page.getByRole("button", { name: "حفظ الفاتورة", exact: true }).click();
+  await page.waitForURL(base + "/invoices/" + invoiceId);
+  await page
+    .locator(".receipt-controls")
+    .getByRole("link", { name: "سجل العمليات", exact: true })
+    .click();
+  await page
+    .getByRole("heading", { name: "سجل العمليات", exact: true })
+    .waitFor();
+  const auditEdit = page.getByRole("row").filter({ hasText: "تعديل فاتورة" });
+  await auditEdit.getByRole("button", { name: "عرض التفاصيل" }).click();
+  await page
+    .getByRole("dialog")
+    .getByRole("cell", { name: "حمولة السيارة", exact: true })
+    .waitFor();
+  assert.equal(
+    await page
+      .getByRole("dialog")
+      .getByRole("cell", { name: "12", exact: true })
+      .count(),
+    1,
+  );
+  assert.equal(
+    await page
+      .getByRole("dialog")
+      .getByRole("cell", { name: "13", exact: true })
+      .count(),
+    1,
+  );
+  await page.getByRole("dialog").getByRole("button", { name: "إغلاق" }).click();
+  await page.screenshot({ path: out + "/09-audit-logs.png", fullPage: true });
   await page
     .getByRole("link", { name: "الفواتير", exact: true })
     .last()
@@ -232,9 +266,11 @@ try {
     .getByRole("alert")
     .filter({ hasText: "لا يمكن تعديل الفاتورة بعد طباعتها" })
     .waitFor();
+  await page.goto(base + "/audit-logs");
+  await page.waitForURL("**/invoices");
   assert.deepEqual(errors, []);
   console.log(
-    "Browser checks passed: login, all five master tabs, invoice creation, read-only preview, receipt, filters, users, role route protection, logout, mobile, print layout and ADMIN print locking. Screenshots: " +
+    "Browser checks passed: login, all five master tabs, invoice creation, read-only preview, receipt, filters, users, role route protection, logout, mobile, print layout ADMIN print locking and invoice audit history. Screenshots: " +
       out,
   );
 } catch (e) {

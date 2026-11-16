@@ -29,3 +29,12 @@ Production D1 `04b6d257-131e-4b69-9502-fd016f55ee0d` was configured with binding
 Deployed URL: https://anbar-system.anbar-system.workers.dev
 
 Initial live HTTP verification from this environment encountered a connection reset before receiving an HTTP response. The first production Super Admin still needs to be created privately through `npm run admin -- --remote`.
+
+## Invoice audit history update
+
+- Added migration `0002_invoice_audit.sql`; all 12 commands applied successfully to local and production D1.
+- All 10 API integration test groups passed, including atomic audit writes/rollback, authenticated email attribution, create/edit/print history, historical actor preservation, pagination/filter validation, denied role access, and append-only enforcement.
+- Chromium workflow passed, including an actual invoice edit and its before/after values in the audit details dialog. Reviewed `tmp/screenshots/09-audit-logs.png` for layout.
+- Production build and deployment succeeded. Worker version: `aa47872f-760f-468a-a573-ef5888ee1b5c`.
+- Live homepage returned HTTP 200; unauthenticated audit endpoint is protected.
+- Audit history starts at this update; prior edits cannot be reconstructed.

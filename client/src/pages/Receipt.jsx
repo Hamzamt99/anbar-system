@@ -50,6 +50,11 @@ export default function Receipt() {
   return (
     <>
       <div className="receipt-controls">
+        {user.role === "SUPER_ADMIN" && (
+          <Link className="button" to={`/audit-logs?invoice_id=${id}`}>
+            سجل العمليات
+          </Link>
+        )}
         <Link className="button" to="/invoices">
           الفواتير
         </Link>

@@ -21,6 +21,7 @@ import Users from "./pages/Users";
 import InvoiceForm from "./pages/InvoiceForm";
 import Invoices from "./pages/Invoices";
 import Receipt from "./pages/Receipt";
+import AuditLogs from "./pages/AuditLogs";
 import "./style.css";
 import { Logo, FactoryBackground } from "./components/Brand";
 const Auth = createContext();
@@ -103,7 +104,10 @@ function Layout() {
             الفواتير
           </NavLink>
           {user.role === "SUPER_ADMIN" && (
-            <NavLink to="/users">المستخدمون</NavLink>
+            <>
+              <NavLink to="/users">المستخدمون</NavLink>
+              <NavLink to="/audit-logs">سجل العمليات</NavLink>
+            </>
           )}
         </nav>
         <button
@@ -165,6 +169,14 @@ function App() {
               element={
                 <Gate role={["SUPER_ADMIN"]}>
                   <Users />
+                </Gate>
+              }
+            />
+            <Route
+              path="audit-logs"
+              element={
+                <Gate role={["SUPER_ADMIN"]}>
+                  <AuditLogs />
                 </Gate>
               }
             />
