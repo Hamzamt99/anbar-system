@@ -1,0 +1,21 @@
+{
+  "name": "anbar-system",
+  "main": "server/worker.js",
+  "compatibility_date": "2026-11-16",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"],
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "anbar-db",
+      "database_id": "04b6d257-131e-4b69-9502-fd016f55ee0d",
+      "migrations_dir": "migrations",
+    },
+  ],
+  "vars": { "APP_ENV": "production" },
+}

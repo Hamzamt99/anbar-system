@@ -147,3 +147,13 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+# Anbar local configuration and generated artifacts
+node_modules/
+dist/
+.wrangler/
+.dev.vars
+.env*
+!.env.example
+tmp/
+test-results/

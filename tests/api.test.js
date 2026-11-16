@@ -1,0 +1,387 @@
+import { test, before, after } from "node:test";
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import { Miniflare, convertV4MiniflareOptions } from "miniflare";
+import { createApp } from "../server/app.js";
+import { hashPassword, verifyPassword } from "../server/services/crypto.js";
+let mf, db, server, base;
+const cookies = {};
+const secret = "Testing-password-2026";
+let refs, first, second, third;
+async function call(
+  path,
+  { role = "SUPER_ADMIN", method = "GET", body, status, headers = {} } = {},
+) {
+  const r = await fetch(base + "/api" + path, {
+    method,
+    headers: {
+      "Content-Type": "application/json",
+      ...(cookies[role] ? { Cookie: cookies[role] } : {}),
+      ...headers,
+    },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  const data = await r.json();
+  assert.equal(
+    r.status,
+    status ??
+      (method === "POST" &&
+      /^\/(customers|drivers|mix-types|vehicles|pumps|users|invoices)$/.test(
+        path,
+      )
+        ? 201
+        : 200),
+    JSON.stringify(data),
+  );
+  return { data: data.data, ...data, cookie: r.headers.get("set-cookie") };
+}
+before(async () => {
+  mf = new Miniflare(
+    convertV4MiniflareOptions({
+      workers: [
+        {
+          name: "test",
+          modules: true,
+          script: 'export default {fetch(){return new Response("ok")}}',
+          compatibilityDate: "2026-11-16",
+          d1Databases: ["DB"],
+        },
+      ],
+    }),
+  );
+  db = await mf.getD1Database("DB");
+  const sql = await readFile(
+    new URL("../migrations/0001_initial.sql", import.meta.url),
+    "utf8",
+  );
+  const [tables, ...triggers] = sql.split("CREATE TRIGGER");
+  for (const stmt of tables
+    .split(";")
+    .map((x) => x.trim())
+    .filter(Boolean))
+    await db.prepare(stmt).run();
+  for (const trigger of triggers)
+    await db.prepare("CREATE TRIGGER" + trigger).run();
+  for (const role of ["SUPER_ADMIN", "ADMIN", "DATA_ENTRY"])
+    await db
+      .prepare("INSERT INTO users(email,password_hash,role) VALUES(?,?,?)")
+      .bind(
+        role.toLowerCase() + "@example.com",
+        await hashPassword(secret),
+        role,
+      )
+      .run();
+  server = createApp(db).listen(0, "127.0.0.1");
+  await new Promise((r) => server.once("listening", r));
+  base = "http://127.0.0.1:" + server.address().port;
+});
+after(async () => {
+  if (server) await new Promise((r) => server.close(r));
+  if (mf) await mf.dispose();
+});
+test("password hashing uses random salts and verifies securely", async () => {
+  const a = await hashPassword(secret),
+    b = await hashPassword(secret);
+  assert.notEqual(a, b);
+  assert.equal(await verifyPassword(secret, a), true);
+  assert.equal(await verifyPassword("wrong", a), false);
+  assert.ok(!a.includes(secret));
+});
+test("authentication, cookie flags, unauthenticated requests, invalid login and CSRF", async () => {
+  await call("/invoices", { role: "none", status: 401 });
+  await call("/auth/login", {
+    role: "none",
+    method: "POST",
+    body: { email: "admin@example.com", password: "wrong" },
+    status: 401,
+  });
+  for (const role of ["SUPER_ADMIN", "ADMIN", "DATA_ENTRY"]) {
+    const r = await call("/auth/login", {
+      role: "none",
+      method: "POST",
+      body: { email: role.toLowerCase() + "@example.com", password: secret },
+    });
+    assert.match(r.cookie, /HttpOnly/);
+    assert.match(r.cookie, /SameSite=Strict/);
+    cookies[role] = r.cookie.split(";")[0];
+    assert.equal((await call("/auth/me", { role })).data.role, role);
+  }
+  await call("/customers", {
+    method: "POST",
+    body: { name: "CSRF" },
+    headers: { Origin: "https://evil.example" },
+    status: 403,
+  });
+});
+test("roles and master-data validation", async () => {
+  await call("/users", { role: "ADMIN", status: 403 });
+  await call("/users", { role: "DATA_ENTRY", status: 403 });
+  await call("/customers", {
+    method: "POST",
+    role: "DATA_ENTRY",
+    body: { name: "Forbidden" },
+    status: 403,
+  });
+  refs = {};
+  for (const [key, path] of [
+    ["customer_id", "customers"],
+    ["driver_id", "drivers"],
+    ["mix_type_id", "mix-types"],
+    ["vehicle_id", "vehicles"],
+    ["pump_id", "pumps"],
+  ])
+    refs[key] = (
+      await call("/" + path, { method: "POST", body: { name: path } })
+    ).data.id;
+  await call("/customers", {
+    method: "POST",
+    body: { name: "customers" },
+    status: 409,
+  });
+  await call("/customers", { method: "POST", body: { name: "" }, status: 400 });
+});
+const invoice = (overrides = {}) => ({
+  ...refs,
+  date: "2026-11-14",
+  pour_location: "البنيات",
+  requested: "30",
+  truck_load: "10",
+  departure: "12:00",
+  arrival: "12:30",
+  finish: "13:00",
+  receiver: "أحمد",
+  chemicals: "",
+  added_water: "",
+  ...overrides,
+});
+test("server quantities, exact decimals, deterministic ordering and reset by date/customer", async () => {
+  first = (
+    await call("/invoices", {
+      role: "DATA_ENTRY",
+      method: "POST",
+      body: invoice(),
+    })
+  ).data;
+  second = (await call("/invoices", { method: "POST", body: invoice() })).data;
+  third = (await call("/invoices", { method: "POST", body: invoice() })).data;
+  assert.equal(first.previous, 0);
+  assert.equal(first.cumulative, 10);
+  assert.equal(second.previous, 10);
+  assert.equal(second.cumulative, 20);
+  assert.equal(third.previous, 20);
+  assert.equal(third.cumulative, 30);
+  const dateReset = await call("/invoices", {
+    method: "POST",
+    body: invoice({ date: "2026-11-15", truck_load: ".1" }),
+    status: 400,
+  });
+  const otherDate = (
+    await call("/invoices", {
+      method: "POST",
+      body: invoice({ date: "2026-11-15", truck_load: "0.1" }),
+    })
+  ).data;
+  assert.equal(otherDate.previous, 0);
+  const decimal = (
+    await call("/invoices", {
+      method: "POST",
+      body: invoice({ date: "2026-11-15", truck_load: "0.2" }),
+    })
+  ).data;
+  assert.equal(decimal.cumulative, 0.3);
+  const customer = (
+    await call("/customers", { method: "POST", body: { name: "عميل آخر" } })
+  ).data;
+  const other = (
+    await call("/invoices", {
+      method: "POST",
+      body: invoice({ customer_id: customer.id }),
+    })
+  ).data;
+  assert.equal(other.previous, 0);
+  await call("/invoices", {
+    method: "POST",
+    body: invoice({ previous: 999, cumulative: 999 }),
+    status: 400,
+  });
+});
+test("parallel invoice writes maintain correct integer totals", async () => {
+  const created = await Promise.all(
+    Array.from({ length: 8 }, () =>
+      call("/invoices", {
+        method: "POST",
+        body: invoice({ date: "2026-11-16", truck_load: "0.125" }),
+      }),
+    ),
+  );
+  const stored = (
+    await db
+      .prepare(
+        "SELECT * FROM invoices WHERE date='2026-11-16' ORDER BY created_at,id",
+      )
+      .all()
+  ).results;
+  assert.equal(stored.length, 8);
+  stored.forEach((r, i) => {
+    assert.equal(r.previous, i * 125);
+    assert.equal(r.cumulative, (i + 1) * 125);
+  });
+});
+test("preview is read-only; print locks ADMIN; SUPER_ADMIN edit recalculates following invoices", async () => {
+  assert.equal(
+    (await call("/invoices/" + first.id, { role: "DATA_ENTRY" })).data
+      .printed_at,
+    null,
+  );
+  await call("/invoices/" + first.id + "/print", {
+    role: "DATA_ENTRY",
+    method: "POST",
+    body: {},
+    status: 403,
+  });
+  await call("/invoices/" + first.id + "/print", {
+    role: "ADMIN",
+    method: "POST",
+    body: {},
+  });
+  await call("/invoices/" + first.id, {
+    role: "ADMIN",
+    method: "PUT",
+    body: invoice({ truck_load: 12 }),
+    status: 403,
+  });
+  await call("/invoices/" + second.id, {
+    role: "DATA_ENTRY",
+    method: "PUT",
+    body: invoice(),
+    status: 403,
+  });
+  await call("/invoices/" + first.id, {
+    method: "PUT",
+    body: invoice({ truck_load: 12 }),
+  });
+  assert.equal((await call("/invoices/" + second.id)).data.previous, 12);
+  assert.equal((await call("/invoices/" + third.id)).data.cumulative, 32);
+  await call("/invoices/" + first.id, {
+    method: "PUT",
+    body: invoice({ date: "2026-11-15", truck_load: 12 }),
+  });
+  assert.equal((await call("/invoices/" + second.id)).data.previous, 0);
+  assert.equal((await call("/invoices/" + third.id)).data.cumulative, 20);
+  assert.equal((await call("/invoices/" + first.id)).data.previous, 0);
+  const moved = await db
+    .prepare(
+      "SELECT cumulative FROM invoices WHERE date='2026-11-15' ORDER BY created_at DESC,id DESC LIMIT 1",
+    )
+    .first();
+  assert.equal(moved.cumulative, 12300);
+});
+test("changing customer recalculates both groups and preserves snapshots on rename/delete", async () => {
+  const customer = (
+    await call("/customers", {
+      method: "POST",
+      body: { name: "العميل الجديد" },
+    })
+  ).data;
+  await call("/invoices/" + second.id, {
+    method: "PUT",
+    body: invoice({ customer_id: customer.id, truck_load: 7 }),
+  });
+  assert.equal((await call("/invoices/" + third.id)).data.previous, 0);
+  assert.equal((await call("/invoices/" + second.id)).data.cumulative, 7);
+  await call("/customers/" + refs.customer_id, {
+    method: "PUT",
+    body: { name: "اسم معدل" },
+  });
+  assert.equal(
+    (await call("/invoices/" + third.id)).data.customer_name,
+    "customers",
+  );
+  await call("/drivers/" + refs.driver_id, { method: "DELETE", body: {} });
+  assert.equal(
+    (await call("/invoices/" + third.id)).data.driver_name,
+    "drivers",
+  );
+  await call("/invoices/" + third.id, {
+    method: "PUT",
+    body: invoice({ truck_load: 9 }),
+  });
+  await call("/invoices", { method: "POST", body: invoice(), status: 400 });
+});
+test("API validation and server-side invoice filters", async () => {
+  const activeDrivers = (await call("/drivers")).data;
+  const allDrivers = (await call("/drivers?include_deleted=1")).data;
+  assert.equal(
+    activeDrivers.some((x) => x.id === refs.driver_id),
+    false,
+  );
+  assert.equal(
+    allDrivers.some((x) => x.id === refs.driver_id),
+    true,
+  );
+  await call("/drivers?include_deleted=1", { role: "DATA_ENTRY", status: 403 });
+
+  await call("/invoices?from=2026-11-20&to=2026-11-01", { status: 400 });
+  await call("/invoices?from=2026-02-30", { status: 400 });
+  await call("/invoices?page=-1", { status: 400 });
+  await call("/invoices?customer_id=1", { role: "DATA_ENTRY", status: 403 });
+  const r = await call("/invoices?from=2026-11-16&to=2026-11-16");
+  assert.equal(r.total, 8);
+  for (const patch of [
+    { requested: -1 },
+    { truck_load: "1.0001" },
+    { departure: "25:00" },
+    { customer_id: 999999 },
+    { receiver: "" },
+  ])
+    await call("/invoices", {
+      method: "POST",
+      body: invoice(patch),
+      status: 400,
+    });
+  await call("/invoices/999999", { status: 404 });
+});
+test("user lifecycle, session invalidation and self-protection", async () => {
+  await call("/users", {
+    method: "POST",
+    body: { email: "bad", password: secret, role: "ADMIN" },
+    status: 400,
+  });
+  await call("/users", {
+    method: "POST",
+    body: { email: "new@example.com", password: "short", role: "ADMIN" },
+    status: 400,
+  });
+  const u = (
+    await call("/users", {
+      method: "POST",
+      body: { email: "new@example.com", password: secret, role: "ADMIN" },
+    })
+  ).data;
+  const login = await call("/auth/login", {
+    role: "none",
+    method: "POST",
+    body: { email: u.email, password: secret },
+  });
+  cookies.temp = login.cookie.split(";")[0];
+  await call("/users/" + u.id, {
+    method: "PUT",
+    body: { email: u.email, role: "DATA_ENTRY" },
+  });
+  await call("/auth/me", { role: "temp", status: 401 });
+  await call("/users/" + u.id + "/password", {
+    method: "POST",
+    body: { password: "New-password-2026" },
+  });
+  await call("/auth/login", {
+    role: "none",
+    method: "POST",
+    body: { email: u.email, password: secret },
+    status: 401,
+  });
+  await call("/users/" + u.id, { method: "DELETE", body: {} });
+  const me = (await call("/auth/me")).data;
+  await call("/users/" + me.id, { method: "DELETE", body: {}, status: 400 });
+  await call("/auth/logout", { role: "ADMIN", method: "POST", body: {} });
+  await call("/auth/me", { role: "ADMIN", status: 401 });
+});
