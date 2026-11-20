@@ -1,4 +1,4 @@
-import React, { useEffect, useId, useRef, useState } from "react";
+import React, { useId, useLayoutEffect, useRef, useState } from "react";
 export function Field({ label, required, children, ...props }) {
   const id = useId();
   return (
@@ -41,9 +41,14 @@ export function Title({ children, subtitle }) {
 }
 export function Modal({ title, onClose, children }) {
   const ref = useRef();
-  useEffect(() => {
+  useLayoutEffect(() => {
     const old = document.activeElement;
+    const input = ref.current.querySelector(
+      'input:not([type="hidden"]):not([disabled]):not([readonly]), textarea:not([disabled]):not([readonly]), select:not([disabled])',
+    );
+    input?.setAttribute("autofocus", "");
     ref.current.showModal();
+    input?.focus({ preventScroll: true });
     return () => old?.focus();
   }, []);
   return (
