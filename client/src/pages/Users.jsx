@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useAuth } from "../main";
 import { api, roles } from "../api";
 import {
   Title,
@@ -48,6 +49,7 @@ function UserFields({ value, onChange, edit = false }) {
   );
 }
 export default function Users() {
+  const { user } = useAuth();
   const [rows, setRows] = useState([]),
     [form, setForm] = useState(initial),
     [error, setError] = useState(""),
@@ -133,9 +135,11 @@ export default function Users() {
                     >
                       إعادة تعيين كلمة المرور
                     </button>
-                    <button className="danger" onClick={() => setRemove(x)}>
-                      حذف
-                    </button>
+                    {x.id !== user.id && (
+                      <button className="danger" onClick={() => setRemove(x)}>
+                        حذف
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))
