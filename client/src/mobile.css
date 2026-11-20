@@ -1,0 +1,590 @@
+/* Navigation is inline on desktop and collapses into a labelled menu on phones. */
+.site-navigation {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex: 1;
+  min-width: 0;
+}
+.nav-toggle {
+  display: none;
+}
+
+@media screen and (max-width: 900px) {
+  .receipt {
+    width: 100%;
+    min-height: 0;
+    padding: 24px 18px;
+    font-size: 18px;
+  }
+  .receipt-main {
+    gap: 24px;
+  }
+  .receipt-heading > b {
+    position: static;
+    display: block;
+    margin-top: 4px;
+  }
+  .receipt-quantities {
+    padding-top: 24px;
+  }
+  .receipt-controls {
+    gap: 8px;
+  }
+}
+
+@media screen and (min-width: 1001px) and (max-width: 1150px) {
+  .site-navigation {
+    flex-basis: 100%;
+  }
+}
+
+@media screen and (max-width: 1000px) {
+  header {
+    display: flex;
+    gap: 12px;
+    padding: 12px 16px;
+  }
+  header .brand {
+    min-width: 0;
+    flex: 1;
+    font-size: clamp(14px, 4vw, 17px);
+    border: 0;
+    padding-left: 0;
+    white-space: normal;
+    line-height: 1.8;
+  }
+  .nav-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    flex: none;
+    padding: 0;
+    font-size: 24px;
+    color: #fff;
+    background: #ffffff0c;
+    border-color: #63717d;
+  }
+  .site-navigation {
+    display: none;
+    flex: 0 0 100%;
+  }
+  .site-navigation.is-open {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding-top: 10px;
+    border-top: 1px solid #ffffff26;
+  }
+  header nav {
+    order: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    flex: none;
+    gap: 8px;
+    width: 100%;
+    overflow: visible;
+    white-space: normal;
+  }
+  header nav a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 8px;
+    text-align: center;
+    font-size: 13px;
+    white-space: normal;
+    border-color: #ffffff20;
+  }
+  header .logout {
+    margin: 0;
+    width: 100%;
+    min-height: 44px;
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+}
+
+@media screen and (max-width: 900px) {
+  /* Keep column labels and every action visible without sideways table scrolling. */
+  .table-wrap:has(> .responsive-table) {
+    border: 0;
+    overflow: visible;
+    border-radius: 0;
+  }
+  .responsive-table,
+  .responsive-table tbody {
+    display: block;
+    width: 100%;
+    min-width: 0;
+  }
+  .responsive-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .responsive-table tbody {
+    display: grid;
+    gap: 14px;
+  }
+  .responsive-table tbody tr {
+    display: block;
+    min-width: 0;
+    padding: 8px 14px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 2px 6px #173a6d05;
+  }
+  .responsive-table tbody tr:nth-child(even) {
+    background: #f7f9fd;
+  }
+  .responsive-table td {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 16px;
+    width: 100%;
+    padding: 10px 0;
+    border: 0;
+    border-bottom: 1px solid #e9eef7;
+    text-align: left;
+    font-size: 14px;
+    font-weight: 400;
+    overflow-wrap: anywhere;
+    min-width: 0;
+  }
+  .responsive-table td::before {
+    content: attr(data-label);
+    flex: 0 0 37%;
+    text-align: right;
+    font-weight: 600;
+    color: #687589;
+    font-size: 12px;
+  }
+  .responsive-table td > * {
+    min-width: 0;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+  .responsive-table td:last-child {
+    border: 0;
+  }
+  .responsive-table td.actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 8px;
+    width: 100%;
+    padding: 12px 0 6px;
+    white-space: normal;
+  }
+  .responsive-table td.actions::before {
+    display: none;
+  }
+  .responsive-table .actions button,
+  .responsive-table .actions .button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1 1 auto;
+    min-height: 44px;
+    margin: 0;
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+  .responsive-table .empty {
+    display: block;
+    padding: 24px 0;
+    text-align: center;
+  }
+  .responsive-table .empty::before {
+    display: none;
+  }
+  .responsive-table .badge {
+    padding: 3px 10px;
+    white-space: normal;
+  }
+
+  .responsive-table td[data-label="البريد الإلكتروني"],
+  .responsive-table td[data-label="اسم الشركة"],
+  .responsive-table td[data-label="اسم العميل"] {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    text-align: right;
+  }
+  .responsive-table td[data-label="البريد الإلكتروني"]::before,
+  .responsive-table td[data-label="اسم الشركة"]::before,
+  .responsive-table td[data-label="اسم العميل"]::before {
+    flex: none;
+  }
+  .responsive-table td[data-label="البريد الإلكتروني"] > bdi {
+    width: 100%;
+    text-align: left;
+  }
+  .responsive-table td > a:not(.button) {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+}
+@media screen and (min-width: 701px) and (max-width: 900px) {
+  .responsive-table tbody {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  }
+  .responsive-table tbody tr:has(.empty) {
+    grid-column: 1/-1;
+  }
+}
+
+@media screen and (min-width: 701px) and (max-width: 1000px) {
+  input,
+  select {
+    height: 46px;
+    min-height: 46px;
+    font-size: 16px;
+  }
+  button,
+  .button {
+    min-height: 44px;
+  }
+  .basic .section-fields,
+  .quantities .section-fields,
+  .times .section-fields,
+  .extras .section-fields,
+  .invoice-filter {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .quantities .section-fields > .field:first-child,
+  .invoice-filter > button {
+    grid-column: 1/-1;
+  }
+  .search-select input {
+    padding-left: 46px;
+  }
+  .select-toggle {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+  }
+}
+
+@media screen and (max-width: 700px) {
+  .shell {
+    min-height: 100dvh;
+    border: 0;
+    overflow: visible;
+  }
+  main {
+    min-width: 0;
+    padding: 22px 14px 28px;
+  }
+  .title {
+    margin-bottom: 20px;
+    padding-right: 10px;
+    border-right-width: 4px;
+  }
+  .title h1 {
+    font-size: 23px;
+  }
+  .title p {
+    font-size: 12px;
+    line-height: 1.9;
+  }
+  input,
+  select {
+    min-height: 46px;
+    height: 46px;
+    font-size: 16px;
+    max-width: 100%;
+  }
+  input[type="date"],
+  input[type="time"] {
+    display: block;
+    min-width: 0;
+    width: 100%;
+  }
+  button,
+  .button {
+    min-height: 44px;
+    padding: 8px 14px;
+    text-align: center;
+  }
+  .field {
+    font-size: 14px;
+    gap: 8px;
+  }
+  .field > span {
+    line-height: 1.8;
+  }
+  .section-title {
+    padding: 12px 14px;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .section-title h2 {
+    font-size: 16px;
+  }
+  .section-title small {
+    max-width: none;
+    font-size: 12px;
+  }
+  .section-fields {
+    padding: 16px 14px 20px;
+  }
+  .form-section {
+    margin-bottom: 18px;
+  }
+  .search-select input {
+    padding-left: 46px;
+    padding-right: 32px;
+  }
+  .search-symbol {
+    top: 10px;
+    right: 10px;
+  }
+  .select-toggle {
+    width: 44px;
+    height: 44px;
+    min-height: 44px;
+    padding: 0;
+  }
+  .search-select ul {
+    min-width: 0;
+    max-height: 230px;
+  }
+  .search-select li {
+    min-height: 44px;
+    padding: 10px 12px;
+    overflow-wrap: anywhere;
+  }
+  .departure-hint {
+    font-size: 12px;
+    margin-top: 8px;
+  }
+  .form-buttons {
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 20px;
+  }
+  .form-buttons button {
+    width: 100%;
+    min-width: 0;
+    min-height: 48px;
+    font-size: 15px;
+  }
+  .filter {
+    padding: 16px;
+    margin: 18px 0 22px;
+    gap: 18px;
+  }
+  .filter > .primary {
+    width: 100%;
+    min-height: 46px;
+  }
+  .user-form {
+    padding-bottom: 20px;
+  }
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    margin: 18px 0;
+  }
+  .toolbar .search {
+    width: 100%;
+    max-width: none;
+  }
+  .toolbar .primary {
+    font-size: 14px;
+  }
+  .tabs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    overflow: visible;
+    margin: 20px 0;
+  }
+  .tabs button {
+    min-height: 46px;
+    font-size: 14px;
+    padding: 8px;
+  }
+  .tabs button:last-child:nth-child(odd) {
+    grid-column: 1/-1;
+  }
+  .pagination {
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  dialog {
+    width: calc(100% - 28px);
+    max-width: 480px;
+    max-height: calc(100dvh - 32px);
+    padding: 20px 16px;
+    overflow: auto;
+  }
+  .modal-head {
+    gap: 12px;
+  }
+  .modal-head h2 {
+    font-size: 18px;
+    line-height: 1.8;
+  }
+  .modal-head button {
+    flex: none;
+    min-width: 44px;
+  }
+  dialog .buttons {
+    flex-wrap: wrap;
+  }
+  dialog .buttons button {
+    flex: 1;
+  }
+  .audit-changes td {
+    font-size: 12px !important;
+    padding: 8px;
+  }
+  .login-scene {
+    min-height: 100dvh;
+    padding: 28px 16px;
+  }
+  .login-card {
+    width: 100%;
+    max-width: 440px;
+    padding: 28px 20px;
+    border-radius: 18px;
+  }
+  .login-card h1 {
+    white-space: normal;
+    font-size: clamp(22px, 6vw, 28px);
+    line-height: 1.7;
+    margin-bottom: 26px;
+  }
+  .login-card .brand-mark {
+    width: 64px;
+    height: 58px;
+  }
+  .login-card input {
+    font-size: 16px;
+  }
+  .login-card .primary {
+    min-height: 50px;
+    font-size: 18px;
+  }
+  .receipt-controls {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .receipt-controls .button,
+  .receipt-controls button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    padding: 8px;
+  }
+}
+
+@media screen and (max-width: 600px) {
+  .basic .section-fields,
+  .times .section-fields,
+  .extras .section-fields,
+  .invoice-filter,
+  .user-form,
+  .audit-filter {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .quantities .section-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .quantities .section-fields > .field:first-child {
+    grid-column: 1/-1;
+  }
+  .receipt {
+    padding: 22px 12px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    font-size: 18px;
+  }
+  .receipt-main {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+  }
+  .receipt-heading h1 {
+    font-size: 30px;
+  }
+  .receipt-heading > b {
+    font-size: 17px;
+    margin-bottom: 18px;
+  }
+  .receipt-data .receipt-line,
+  .receipt-times .receipt-line,
+  .receipt-additional .receipt-line {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+    gap: 10px;
+    font-size: 18px;
+    align-items: baseline;
+  }
+  .receipt-line > span,
+  .receipt-data .receipt-line > span {
+    width: auto;
+    white-space: normal;
+  }
+  .receipt-line > strong,
+  .receipt-times .receipt-line > strong,
+  .receipt-additional .receipt-line > strong {
+    min-width: 0;
+    min-height: 30px;
+    font-size: 18px;
+  }
+  .receipt-quantities {
+    padding-top: 0;
+  }
+  .receipt table td,
+  .receipt table td:last-child {
+    font-size: 18px;
+  }
+  .receipt-times,
+  .receipt-additional {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+    font-size: 18px;
+  }
+  .receipt-times {
+    margin-top: 22px;
+    padding: 18px 0;
+  }
+  .receipt-additional {
+    padding-top: 20px;
+  }
+  .receipt-times .receipt-line,
+  .receipt-additional .receipt-line {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+  }
+  .declaration {
+    font-size: 18px;
+    margin: 24px 0;
+  }
+  .signatures {
+    gap: 16px;
+    margin: 22px 0 0;
+    font-size: 18px;
+  }
+  .signatures strong {
+    min-height: 65px;
+    overflow-wrap: anywhere;
+  }
+}

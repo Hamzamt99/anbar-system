@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { createRoot } from "react-dom/client";
 import {
   BrowserRouter,
@@ -7,7 +13,7 @@ import {
   Outlet,
   Route,
   Routes,
-  useNavigate,
+  useLocation,
 } from "react-router-dom";
 import "@fontsource/noto-sans-arabic/400.css";
 import "@fontsource/noto-sans-arabic/600.css";
@@ -23,6 +29,7 @@ import Invoices from "./pages/Invoices";
 import Receipt from "./pages/Receipt";
 import AuditLogs from "./pages/AuditLogs";
 import "./style.css";
+import "./mobile.css";
 import { Logo, FactoryBackground } from "./components/Brand";
 const Auth = createContext();
 export const useAuth = () => useContext(Auth);
@@ -86,43 +93,75 @@ function Login() {
 }
 function Layout() {
   const { user, setUser } = useAuth(),
-    [error, setError] = useState("");
+    [error, setError] = useState(""),
+    [menuOpen, setMenuOpen] = useState(false);
+  const location = useLocation(),
+    menuButton = useRef(null);
+  useEffect(() => setMenuOpen(false), [location.pathname]);
   if (!user) return <Navigate to="/login" replace />;
   return (
     <div className="shell">
-      <header>
+      <header
+        onKeyDown={(event) => {
+          if (event.key === "Escape" && menuOpen) {
+            setMenuOpen(false);
+            menuButton.current?.focus();
+          }
+        }}
+      >
         <NavLink className="brand" to="/invoices/new">
           <Logo small />
           شركة العنبر للخرسانة
         </NavLink>
-        <nav>
-          {user.role !== "DATA_ENTRY" && (
-            <NavLink to="/master">البيانات الأساسية</NavLink>
-          )}
-          <NavLink to="/invoices/new">إنشاء فاتورة</NavLink>
-          <NavLink to="/invoices" end>
-            الفواتير
-          </NavLink>
-          {user.role === "SUPER_ADMIN" && (
-            <>
-              <NavLink to="/users">المستخدمون</NavLink>
-              <NavLink to="/audit-logs">سجل العمليات</NavLink>
-            </>
-          )}
-        </nav>
         <button
-          className="logout"
-          onClick={async () => {
-            try {
-              await api("/auth/logout", { method: "POST", body: {} });
-              setUser(null);
-            } catch (e) {
-              setError(e.message);
-            }
-          }}
+          ref={menuButton}
+          type="button"
+          className="nav-toggle"
+          aria-label="القائمة"
+          aria-expanded={menuOpen}
+          aria-controls="site-navigation"
+          onClick={() => setMenuOpen(!menuOpen)}
         >
-          تسجيل الخروج
+          <span aria-hidden="true">{menuOpen ? "×" : "☰"}</span>
         </button>
+        <div
+          id="site-navigation"
+          className={`site-navigation${menuOpen ? " is-open" : ""}`}
+        >
+          <nav
+            aria-label="التنقل الرئيسي"
+            onClick={(event) => {
+              if (event.target.closest("a")) setMenuOpen(false);
+            }}
+          >
+            {user.role !== "DATA_ENTRY" && (
+              <NavLink to="/master">البيانات الأساسية</NavLink>
+            )}
+            <NavLink to="/invoices/new">إنشاء فاتورة</NavLink>
+            <NavLink to="/invoices" end>
+              الفواتير
+            </NavLink>
+            {user.role === "SUPER_ADMIN" && (
+              <>
+                <NavLink to="/users">المستخدمون</NavLink>
+                <NavLink to="/audit-logs">سجل العمليات</NavLink>
+              </>
+            )}
+          </nav>
+          <button
+            className="logout"
+            onClick={async () => {
+              try {
+                await api("/auth/logout", { method: "POST", body: {} });
+                setUser(null);
+              } catch (e) {
+                setError(e.message);
+              }
+            }}
+          >
+            تسجيل الخروج
+          </button>
+        </div>
       </header>
       <main>
         <ErrorBox error={error} />

@@ -47,3 +47,14 @@ Initial live HTTP verification from this environment encountered a connection re
 - Full Chromium workflow passed with empty finish/receiver fields, required pump accessibility, displayed/printed adjusted time, and editing without an additional offset. Visual form review passed.
 - Migration `0003_departure_input.sql` applied to local and production D1.
 - Production build and deployment passed; version `ec1116ca-80fa-4256-a4f9-16e842d551ff`.
+
+## Mobile layout update — 20 November 2026
+
+- Fixed phone/tablet navigation with a collapsible menu, route-selection closing, Escape handling, and focus returning to the menu button.
+- Added labelled responsive cards for invoice, master-data, users, and audit rows. Kept all row actions visible without horizontal table scrolling on small screens.
+- Improved phone form columns, time/date fields, touch controls, searchable selectors, long email/company wrapping, master tabs, dialogs, and login spacing.
+- Stacked receipt details and long timing labels for phone reading; retained the A4 print layout through screen-only responsive styles.
+- `npm run test:browser` passed the desktop workflow and additional checks at 320px, 390px, and 768px on every page, including dialogs, confirmation, searchable selection, navigation, tap sizes, mobile login, and overflow checks. Reviewed mobile screenshots and the A4 print screenshot.
+- `npm test`: all 11 API integration test groups passed.
+- Production build and deployment succeeded. Worker version: `65ff8077-e3d7-40d1-bf26-46018f7bf8d9`.
+- Live homepage and updated mobile stylesheet returned HTTP 200.

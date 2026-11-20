@@ -88,7 +88,7 @@ export default function Master() {
       </div>
       <ErrorBox error={error} />
       <div className="table-wrap">
-        <table>
+        <table role="table" className="responsive-table">
           <thead>
             <tr>
               <th>{type[2]}</th>
@@ -101,8 +101,8 @@ export default function Master() {
             ) : (
               rows.map((x) => (
                 <tr key={x.id}>
-                  <td>{x.name}</td>
-                  <td className="actions">
+                  <td data-label={type[2]}>{x.name}</td>
+                  <td data-label="الإجراءات" className="actions">
                     <button
                       onClick={() => {
                         setEdit(x);

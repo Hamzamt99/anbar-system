@@ -143,7 +143,7 @@ export default function AuditLogs() {
       </form>
       <ErrorBox error={error} />
       <div className="table-wrap">
-        <table>
+        <table role="table" className="responsive-table">
           <thead>
             <tr>
               {[
@@ -163,17 +163,22 @@ export default function AuditLogs() {
             ) : (
               rows.map((row) => (
                 <tr key={row.id}>
-                  <td>{timestamp(row.created_at)}</td>
-                  <td dir="ltr">{row.actor_email}</td>
-                  <td>
+                  <td data-label="التاريخ والوقت">
+                    {timestamp(row.created_at)}
+                  </td>
+                  <td data-label="البريد الإلكتروني">
+                    <bdi dir="ltr">{row.actor_email}</bdi>
+                  </td>
+                  <td data-label="رقم الفاتورة">
                     <Link
+                      dir="ltr"
                       to={`/invoices/${row.invoice_id}`}
                     >{`INV-${String(row.invoice_id).padStart(6, "0")}`}</Link>
                   </td>
-                  <td>
+                  <td data-label="الإجراء">
                     <span className="badge">{actions[row.action]}</span>
                   </td>
-                  <td className="actions">
+                  <td data-label="التفاصيل" className="actions">
                     <button onClick={() => setSelected(row)}>
                       عرض التفاصيل
                     </button>

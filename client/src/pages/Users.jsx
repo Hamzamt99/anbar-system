@@ -96,7 +96,7 @@ export default function Users() {
       </form>
       <ErrorBox error={error} />
       <div className="table-wrap">
-        <table>
+        <table role="table" className="responsive-table">
           <thead>
             <tr>
               <th>البريد الإلكتروني</th>
@@ -110,11 +110,13 @@ export default function Users() {
             ) : (
               rows.map((x) => (
                 <tr key={x.id}>
-                  <td dir="ltr">{x.email}</td>
-                  <td>
+                  <td data-label="البريد الإلكتروني">
+                    <bdi dir="ltr">{x.email}</bdi>
+                  </td>
+                  <td data-label="الدور">
                     <span className="badge">{roles[x.role]}</span>
                   </td>
-                  <td className="actions">
+                  <td data-label="الإجراءات" className="actions">
                     <button
                       onClick={() => {
                         setEdit(x);

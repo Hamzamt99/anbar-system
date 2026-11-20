@@ -97,7 +97,7 @@ export default function Invoices() {
       )}
       <ErrorBox error={error} />
       <div className="table-wrap">
-        <table className="invoice-table">
+        <table role="table" className="invoice-table responsive-table">
           <thead>
             <tr>
               {[
@@ -119,17 +119,21 @@ export default function Invoices() {
             ) : (
               rows.map((x) => (
                 <tr key={x.id}>
-                  <td dir="ltr">
-                    <strong>{x.number}</strong>
+                  <td data-label="رقم الفاتورة">
+                    <strong dir="ltr">{x.number}</strong>
                   </td>
-                  <td dir="ltr">{x.date}</td>
-                  <td>{x.customer_name}</td>
-                  <td>{x.driver_name}</td>
-                  <td>{x.mix_type_name}</td>
-                  <td>
-                    <strong>{amount(x.truck_load)}</strong> م³
+                  <td data-label="التاريخ">
+                    <bdi dir="ltr">{x.date}</bdi>
                   </td>
-                  <td className="actions">
+                  <td data-label="اسم الشركة">{x.customer_name}</td>
+                  <td data-label="السائق">{x.driver_name}</td>
+                  <td data-label="نوع الخلطة">{x.mix_type_name}</td>
+                  <td data-label="حمولة السيارة">
+                    <span>
+                      <strong>{amount(x.truck_load)}</strong> م³
+                    </span>
+                  </td>
+                  <td data-label="الإجراءات" className="actions">
                     <Link className="button" to={`/invoices/${x.id}`}>
                       عرض
                     </Link>

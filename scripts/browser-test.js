@@ -1,9 +1,10 @@
 import { spawn, spawnSync } from "node:child_process";
 import { mkdir, writeFile, rm } from "node:fs/promises";
 import assert from "node:assert/strict";
+import { openNavigation, checkMobilePages } from "./mobile-checks.js";
 import { chromium } from "@playwright/test";
 import { hashPassword, token } from "../server/services/crypto.js";
-const state = "tmp/browser-d1",
+const state = `tmp/browser-d1-${process.pid}`,
   sql = "tmp/browser-seed.sql",
   out = "tmp/screenshots",
   base = "http://localhost:8788";
@@ -15,7 +16,12 @@ function command(args) {
 }
 try {
   await mkdir(out, { recursive: true });
-  await rm(state, { recursive: true, force: true });
+  await rm(state, {
+    recursive: true,
+    force: true,
+    maxRetries: 5,
+    retryDelay: 200,
+  });
   command([
     "d1",
     "migrations",
@@ -43,8 +49,15 @@ try {
   ]);
   await rm(sql);
   worker = spawn(
-    "npx",
-    ["wrangler", "dev", "--port", "8788", "--persist-to", state],
+    process.execPath,
+    [
+      "node_modules/wrangler/wrangler-dist/cli.js",
+      "dev",
+      "--port",
+      "8788",
+      "--persist-to",
+      state,
+    ],
     { stdio: ["ignore", "pipe", "pipe"], detached: true },
   );
   let log = "";
@@ -228,7 +241,9 @@ try {
     data: { email: "manager@example.com", password, role: "ADMIN" },
   });
   assert.equal(adminCreated.status(), 201);
+  await checkMobilePages(page, { base, out, invoiceId });
   await page.setViewportSize({ width: 390, height: 844 });
+  await openNavigation(page);
   await page.getByRole("link", { name: "إنشاء فاتورة", exact: true }).click();
   await page.getByLabel("مكان الصب").waitFor();
   await page.screenshot({ path: out + "/08-mobile.png", fullPage: true });
@@ -239,8 +254,22 @@ try {
     true,
     "Mobile page overflows horizontally",
   );
+  await openNavigation(page);
   await page.getByRole("button", { name: "تسجيل الخروج", exact: true }).click();
   await page.waitForURL("**/login");
+  for (const width of [320, 390, 768]) {
+    await page.setViewportSize({ width, height: 844 });
+    assert.ok(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    );
+    await page.screenshot({
+      path: `${out}/mobile-${width}-login.png`,
+      fullPage: true,
+    });
+  }
+  await page.setViewportSize({ width: 390, height: 844 });
   await page.getByLabel("البريد الإلكتروني").fill("entry@example.com");
   await page.getByLabel("كلمة المرور", { exact: true }).fill(password);
   await page.getByRole("button", { name: "تسجيل الدخول", exact: true }).click();
@@ -251,6 +280,7 @@ try {
   );
   await page.goto(base + "/users");
   await page.waitForURL("**/invoices");
+  await openNavigation(page);
   await page.getByRole("button", { name: "تسجيل الخروج", exact: true }).click();
   await page.waitForURL("**/login");
   await page.getByLabel("البريد الإلكتروني").fill("manager@example.com");
@@ -305,9 +335,28 @@ try {
   if (browser) await browser.close();
   if (worker?.pid) {
     try {
+      const ended = new Promise((resolve) => worker.once("exit", resolve));
       worker.kill("SIGTERM");
+      let timer;
+      await Promise.race([
+        ended,
+        new Promise((resolve) => {
+          timer = setTimeout(() => {
+            try {
+              process.kill(-worker.pid, "SIGKILL");
+            } catch {}
+            resolve();
+          }, 5000);
+        }),
+      ]);
+      clearTimeout(timer);
     } catch {}
   }
   await rm(sql, { force: true });
-  await rm(state, { recursive: true, force: true });
+  await rm(state, {
+    recursive: true,
+    force: true,
+    maxRetries: 5,
+    retryDelay: 200,
+  });
 }

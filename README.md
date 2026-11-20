@@ -126,3 +126,9 @@ Only customer, pour location, date, driver, vehicle, pump, requested quantity, t
 The factory departure time saved and printed is the entered time **plus 15 minutes**, including midnight rollover (`23:50` becomes `00:05`). Arrival time stays optional and independent. The form displays the final departure underneath the input. The server enforces the adjustment and stores `departure_input` separately; edits reload the original entry, so saving or printing repeatedly does not add further offsets. Invoice dates remain the dates entered.
 
 Apply migration `0003_departure_input.sql` before deploying. Existing recorded departure times are preserved on unrelated edits; explicitly changing a legacy invoice's departure entry applies the new rule.
+
+## Mobile layout
+
+The phone and tablet layouts use a collapsible, keyboard-accessible navigation menu, larger form controls, readable single-column forms on narrow phones, and labelled cards for invoice, master-data, user, and audit tables. Searchable selectors, action buttons, confirmation dialogs, and long emails fit narrow viewports. Receipt details stack vertically on phones while A4 print styles keep the paper receipt layout.
+
+`npm run test:browser` includes checks for every page at 320px, 390px, and 768px, with screenshots named `tmp/screenshots/mobile-<width>-<page>.png`. These checks cover document/table overflow, touch control sizes, navigation expansion and Escape handling, user/audit dialogs, master-data confirmation, mobile login, and searchable selections. Desktop workflow, permissions, invoice calculations, and A4 print checks remain included.
