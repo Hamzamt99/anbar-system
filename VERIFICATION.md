@@ -58,3 +58,46 @@ Initial live HTTP verification from this environment encountered a connection re
 - `npm test`: all 11 API integration test groups passed.
 - Production build and deployment succeeded. Worker version: `65ff8077-e3d7-40d1-bf26-46018f7bf8d9`.
 - Live homepage and updated mobile stylesheet returned HTTP 200.
+
+## Custom factory receipt — 20 November 2026
+
+The current receipt requests **220 × 190 mm landscape paper**, `@page margin: 0.5cm`, and 100% scale. There is no A4 print rule. Receipt content has a further 2 mm internal safe inset; print colors are preserved where supported. Application screens are unchanged apart from adding the requested optional factory-arrival field to the existing time section.
+
+### Files changed
+
+- `client/src/receipt-print.css` — authoritative custom-paper styles, RTL factory structure, safe wrapping, print-only visibility and margins.
+- `client/src/pages/Receipt.jsx` — full uncropped PNG upper-left, centered title, discreet invoice number, four shipment times and printable logo-load fallback.
+- `client/src/style.css`, `client/src/branding.css`, `client/src/main.jsx` — remove obsolete A4/receipt logo overrides and load receipt-only styles.
+- `client/src/pages/InvoiceForm.jsx` — optional `ساعة الوصول إلى المصنع` time input.
+- `server/validation/index.js`, `server/services/invoices.js` — optional HH:mm validation and prepared create/update column binding.
+- `migrations/0004_factory_arrival.sql` — add nullable `factory_arrival`, preserve old rows, and extend the existing atomic audit snapshots.
+- `client/src/pages/AuditLogs.jsx` — display the new field in audit details.
+- `tests/api.test.js` — creation, reading, editing, invalid times, optional/null legacy values and audit coverage for the new field.
+- `scripts/browser-test.js`, `scripts/receipt-print-checks.js` — generate full-field and long-value receipts and exercise form persistence, print layout, logo fallback, totals and printed permissions.
+- `scripts/verify-receipt-pdfs.py` — inspect exact page geometry, page count, safe glyph bounds, logo/title positioning and all four time values.
+- `.gitignore`, `README.md`, `VERIFICATION.md` — ignore generated verification PDFs and document setup, paper selection and verification.
+
+### Results
+
+- `npm test`: **12 test groups passed**, including existing authentication, role permissions, daily quantity resets, concurrent totals, editing/recalculation, audit history and printed-invoice restrictions.
+- `npm run test:browser`: passed desktop and mobile workflows, plus full-field creation and editing of factory arrival from `17:20` to `17:35`, subsequent reading and printing.
+- Standard receipt: **1 page, exactly 220 × 190 mm** in the final verification PDF.
+- Long receipt: **1 page, exactly 220 × 190 mm**, with a **197-character Arabic customer name** and **199-character Arabic location**. DOM overflow and clipping checks passed.
+- Both final PDFs were re-rendered and visually inspected at the custom paper aspect ratio. The logo is upper-left, title centered, all four times present, no navigation/buttons visible, and all text/lines/signatures fit inside the paper. A grayscale render was also inspected; the original logo remains recognizable.
+- Logo-failure check: blocked the PNG in a separate local browser context; the company-name fallback remained printable and did not prevent printing.
+- Repeated print actions preserved invoice counts and previous/current/cumulative quantities. ADMIN still received HTTP 403 when attempting to edit a printed invoice.
+- Existing production table counts were unchanged by migration, all seven triggers were preserved, and the foreign-key check was clean. A private local backup was taken before applying the migration. Verification records existed only in a disposable local D1 database; no test invoices were added to production.
+- Local and production migration `0004_factory_arrival.sql` succeeded. Production build and deployment succeeded; version **a874c137-6c14-405a-a9b1-8f57b03217fd**. The live homepage and custom-size stylesheet returned HTTP 200.
+
+### PDF precision and browser verification limits
+
+The tested Chromium build natively exported PDF bounds of approximately **220.133 × 190.161 mm** despite `@page { size: 22cm 19cm; margin: 0.5cm; }`, `scale: 1`, and no Fit to page. The final sample PDFs' MediaBox/CropBox/TrimBox/BleedBox/ArtBox were normalized to exactly 220 × 190 mm. Their content streams were verified byte-for-byte unchanged: **no scaling, reflow, rasterization or content edits** were applied. These PDFs were then rendered and visually inspected again. Raw native exports are retained under ignored `tmp/pdfs/`.
+
+Application printing remains native HTML/browser printing with the exact CSS custom paper request. This normalization is only a local verification-artifact step, not a new production PDF-generation feature. Chromium's engine was exercised; a separate Edge binary and a physical printer were not used. Set the physical printer driver to 220 × 190 mm, 100% scale, and disable browser headers/footers.
+
+Final verification artifacts (generated, not committed):
+
+- `output/pdf/anbar-receipt-normal-220x190.pdf`
+- `output/pdf/anbar-receipt-long-220x190.pdf`
+- `tmp/receipt-print-verification.json` — browser geometry and fixture lengths.
+- `tmp/receipt-pdf-verification.json` — exact final PDF dimensions and content-stream checks.

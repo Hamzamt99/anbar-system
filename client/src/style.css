@@ -551,8 +551,8 @@ dialog::backdrop {
   color: #000;
   background: #fff;
   font-family: Amiri, serif;
-  width: 210mm;
-  min-height: 297mm;
+  width: 220mm;
+  min-height: 190mm;
   padding: 28mm 12mm 20mm;
   margin: 0 auto;
   font-size: 20px;
@@ -831,89 +831,7 @@ dialog::backdrop {
     gap: 15px;
   }
 }
-@page {
-  size: A4 portrait;
-  margin: 0;
-}
-@media print {
-  html,
-  body,
-  #root {
-    background: white;
-    margin: 0;
-    padding: 0;
-  }
-  .shell {
-    margin: 0;
-    border: 0;
-    box-shadow: none;
-    border-radius: 0;
-    min-height: 0;
-    max-width: none;
-    overflow: visible;
-  }
-  header,
-  .receipt-controls,
-  .error {
-    display: none !important;
-  }
-  main {
-    padding: 0;
-  }
-  .receipt {
-    width: 210mm;
-    min-height: 297mm;
-    padding: 28mm 12mm 20mm;
-    margin: 0;
-    transform: none;
-    font-size: 20px;
-    break-after: avoid;
-    print-color-adjust: exact;
-  }
-  .receipt-main {
-    gap: 18mm;
-  }
-  .receipt-heading h1 {
-    font-size: 34px;
-  }
-  .receipt-heading > b {
-    position: absolute;
-    left: 8mm;
-    top: 14px;
-    font-size: 17px;
-  }
-  .receipt-data .receipt-line {
-    font-size: 20px;
-  }
-  .receipt-data .receipt-line > span {
-    width: 115px;
-    white-space: nowrap;
-  }
-  .receipt-quantities {
-    padding-top: 28mm;
-  }
-  .receipt-quantities td {
-    font-size: 21px;
-  }
-  .receipt-quantities td:last-child {
-    font-size: 19px;
-  }
-  .receipt-times,
-  .receipt-additional {
-    font-size: 18px;
-  }
-  .receipt-times .receipt-line > span {
-    white-space: nowrap;
-  }
-  .signatures {
-    gap: 30mm;
-  }
-  article,
-  section,
-  table {
-    break-inside: avoid;
-  }
-}
+
 .brand-mark {
   width: 80px;
   height: 72px;
@@ -1024,17 +942,7 @@ dialog::backdrop {
     font-size: 15px;
   }
 }
-@media print {
-  .shell {
-    width: 100%;
-  }
-  .receipt table td {
-    font-size: 21px;
-  }
-  .receipt table td:last-child {
-    font-size: 19px;
-  }
-}
+
 .audit-filter {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }

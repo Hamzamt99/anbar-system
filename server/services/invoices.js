@@ -58,6 +58,7 @@ export const invoiceColumns = [
   "departure",
   "departure_input",
   "arrival",
+  "factory_arrival",
   "finish",
   "chemicals",
   "added_water",

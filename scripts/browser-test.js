@@ -2,6 +2,7 @@ import { spawn, spawnSync } from "node:child_process";
 import { mkdir, writeFile, rm } from "node:fs/promises";
 import assert from "node:assert/strict";
 import { openNavigation, checkMobilePages } from "./mobile-checks.js";
+import { verifyReceiptPrint } from "./receipt-print-checks.js";
 import { chromium } from "@playwright/test";
 import { hashPassword, token } from "../server/services/crypto.js";
 const state = `tmp/browser-d1-${process.pid}`,
@@ -165,7 +166,7 @@ try {
   assert.equal(savedInvoice.finish, "");
   assert.equal(savedInvoice.receiver, "");
   await page.screenshot({ path: out + "/06-receipt.png", fullPage: true });
-  await page.setViewportSize({ width: 794, height: 1123 });
+  await page.setViewportSize({ width: 832, height: 718 });
   await page.emulateMedia({ media: "print" });
   await page.screenshot({ path: out + "/07-print.png", fullPage: true });
   assert.equal(await page.locator("header").isVisible(), false);
@@ -173,7 +174,10 @@ try {
   const height = await page
     .locator(".receipt")
     .evaluate((el) => el.getBoundingClientRect().height);
-  assert.ok(height <= 1123, "Receipt exceeds one A4 page: " + height);
+  assert.ok(
+    height <= (180 / 25.4) * 96 + 1,
+    "Receipt exceeds the 220 × 190 mm printable area: " + height,
+  );
   await page.emulateMedia({ media: "screen" });
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.getByRole("link", { name: "تعديل", exact: true }).click();
@@ -323,6 +327,7 @@ try {
     .waitFor();
   await page.goto(base + "/audit-logs");
   await page.waitForURL("**/invoices");
+  await verifyReceiptPrint(browser, { base, password, out });
   assert.deepEqual(errors, []);
   console.log(
     "Browser checks passed: login, all five master tabs, invoice creation, read-only preview, receipt, filters, users, role route protection, logout, mobile, print layout ADMIN print locking and invoice audit history. Screenshots: " +

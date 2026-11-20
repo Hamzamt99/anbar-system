@@ -157,3 +157,6 @@ dist/
 !.env.example
 tmp/
 test-results/
+
+# Receipt verification PDFs are generated artifacts, not stored invoice files.
+/output/pdf/

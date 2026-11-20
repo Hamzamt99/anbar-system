@@ -1,6 +1,6 @@
 # شركة العنبر للخرسانة
 
-Complete Arabic RTL concrete delivery invoice application. React + Vite (JavaScript), React Router, Express on Cloudflare Workers, Cloudflare D1, and self-hosted Arabic fonts. The six approved PDF pages inform the login, master data, invoice form, list, user management, and A4 receipt.
+Complete Arabic RTL concrete delivery invoice application. React + Vite (JavaScript), React Router, Express on Cloudflare Workers, Cloudflare D1, and self-hosted Arabic fonts. The six approved PDF pages inform the login, master data, invoice form, list, user management, and custom-size receipt.
 
 ## Prerequisites
 
@@ -63,7 +63,7 @@ The remote admin command asks for credentials interactively, hashes the password
 - Saving opens the invoice details. “معاينة الطباعة” saves the current form and opens its printable receipt without marking it printed. Viewing an existing preview performs no writes.
 - Admin and Super Admin can filter invoices by customer, driver, and date range. Results paginate in groups of 20. Data Entry can view the list and details and preview receipts, without filtering, editing, or recording a print action.
 - “طباعة” records the first printed timestamp and invokes the browser print dialog. Canceling that dialog does not undo the recorded print action. Admin cannot edit the invoice afterward; Super Admin can.
-- Print the receipt on A4 portrait at 100% scale. The stylesheet sets `@page` to A4 with zero browser margins and internal receipt margins. Turn browser header/footer printing off. The signature line is left blank for manual signing.
+- Print the receipt on custom **220 × 190 mm** landscape paper at **100% scale**. `@page` sets `size: 22cm 19cm` and `margin: 0.5cm`; do not select A4 or Fit to page. Configure this custom paper size in the printer driver and turn browser header/footer printing off. The signature line is left blank for manual signing.
 
 ## Data integrity and architecture
 
@@ -97,7 +97,7 @@ npx wrangler deploy --dry-run --outdir tmp/worker-build
 npm audit
 ```
 
-`npm test` uses an isolated Miniflare D1 database with the real migrations and Express routes; it does not substitute a SQLite file or mock database. Eleven test groups cover authentication, cookies, CSRF, role permissions, master-data constraints, integer decimal quantities, customer/date resets, concurrent creation, old/new group recalculation, snapshot history, print locks, input validation, filtering, user lifecycle, logout, and session revocation.
+`npm test` uses an isolated Miniflare D1 database with the real migrations and Express routes; it does not substitute a SQLite file or mock database. Twelve test groups cover authentication, cookies, CSRF, role permissions, master-data constraints, integer decimal quantities, customer/date resets, concurrent creation, old/new group recalculation, snapshot history, print locks, input validation, filtering, user lifecycle, logout, and session revocation.
 
 `npm run test:browser` builds the app, applies migrations to a disposable local D1, generates a random temporary test credential, and runs Chromium against a real Wrangler Worker on port 8788. It exercises all master tabs, invoice creation and preview, user creation, list filters, role route protection, mobile width, and print styles. Screenshots of all screens go to ignored `tmp/screenshots`. Invoice filter selectors include deleted customers and drivers for historical searches; new-invoice selectors show active records only. The test removes its disposable D1 state and credentials afterward; normal local and remote data remain untouched.
 
@@ -105,7 +105,7 @@ npm audit
 
 ## Deployment status
 
-Local migration, all eleven API test groups, the full browser workflow, the production build, and the Worker deployment dry run have passed. See [VERIFICATION.md](VERIFICATION.md) for the execution report.
+Local migration, all twelve API test groups, the full browser workflow, the production build, and the Worker deployment dry run have passed. See [VERIFICATION.md](VERIFICATION.md) for the execution report.
 
 Production D1 migrations and Worker deployment have now completed with database `04b6d257-131e-4b69-9502-fd016f55ee0d`. Application URL: https://anbar-system.anbar-system.workers.dev. Create the first production Super Admin with `npm run admin -- --remote`.
 
@@ -129,6 +129,22 @@ Apply migration `0003_departure_input.sql` before deploying. Existing recorded d
 
 ## Mobile layout
 
-The phone and tablet layouts use a collapsible, keyboard-accessible navigation menu, larger form controls, readable single-column forms on narrow phones, and labelled cards for invoice, master-data, user, and audit tables. Searchable selectors, action buttons, confirmation dialogs, and long emails fit narrow viewports. Receipt details stack vertically on phones while A4 print styles keep the paper receipt layout.
+The phone and tablet layouts use a collapsible, keyboard-accessible navigation menu, larger form controls, readable single-column forms on narrow phones, and labelled cards for invoice, master-data, user, and audit tables. Searchable selectors, action buttons, confirmation dialogs, and long emails fit narrow viewports. Receipt details stack vertically on phones while custom-paper print styles keep the factory receipt layout.
 
-`npm run test:browser` includes checks for every page at 320px, 390px, and 768px, with screenshots named `tmp/screenshots/mobile-<width>-<page>.png`. These checks cover document/table overflow, touch control sizes, navigation expansion and Escape handling, user/audit dialogs, master-data confirmation, mobile login, and searchable selections. Desktop workflow, permissions, invoice calculations, and A4 print checks remain included.
+`npm run test:browser` includes checks for every page at 320px, 390px, and 768px, with screenshots named `tmp/screenshots/mobile-<width>-<page>.png`. These checks cover document/table overflow, touch control sizes, navigation expansion and Escape handling, user/audit dialogs, master-data confirmation, mobile login, and searchable selections. Desktop workflow, permissions, invoice calculations, and custom-paper print checks remain included.
+
+## Custom factory receipt and factory-arrival time
+
+The receipt uses `client/src/receipt-print.css` for 220 × 190 mm landscape paper with 5 mm page margins and an additional 2 mm internal safe inset. The full, uncropped transparent PNG appears upper-left, with a text fallback on image failure. The certificate title stays centered; the invoice number is discreetly placed in the header. Dotted lines, RTL data, quantities, shipment times, chemicals, water, declaration, receiver, and manual signature retain the factory receipt structure.
+
+Migration `0004_factory_arrival.sql` adds nullable `invoices.factory_arrival` and extends the existing audit snapshots to include it. Existing invoice data is not rewritten. The optional **ساعة الوصول إلى المصنع** input validates HH:mm like the other optional time fields, persists on create/edit, and appears on details and print. Other departure-offset rules, role permissions, printed locks, and quantity calculations remain unchanged.
+
+`npm run test:browser` creates full-field and long-value verification invoices only in its disposable local D1 database. It saves native Chromium print PDFs under ignored `output/pdf/` at scale 1, checks all four time fields, logo failure, print permissions, and unchanged totals after reprinting. For exact PDF geometry and font-boundary checks:
+
+```bash
+python3 -m venv tmp/pdf-venv
+tmp/pdf-venv/bin/pip install pypdf pdfplumber
+tmp/pdf-venv/bin/python scripts/verify-receipt-pdfs.py
+```
+
+Chromium's native export in the tested build rounds the PDF bounds to approximately 220.133 × 190.161 mm despite the exact CSS paper size. The verification script changes only the sample PDFs' page boxes to exactly 220 × 190 mm, preserving their content streams byte-for-byte (no scaling or Fit to page). It then verifies one page, safe text margins, the upper-left logo, the centered title, and all four time values. This is a local verification utility, not a new application PDF storage or export feature.

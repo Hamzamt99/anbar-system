@@ -23,6 +23,7 @@ const initial = () => ({
   truck_load: "",
   departure: "",
   arrival: "",
+  factory_arrival: "",
   finish: "",
   chemicals: "",
   added_water: "",
@@ -245,6 +246,7 @@ export default function InvoiceForm() {
                 : " (إضافة 15 دقيقة تلقائياً)"}
             </small>
           </div>
+          {input("factory_arrival", "ساعة الوصول إلى المصنع", { type: "time" })}
           {input("arrival", "ساعة الوصول إلى موقع الصب", { type: "time" })}
           {input("finish", "ساعة انتهاء تفريغ الحمولة", { type: "time" })}
         </Section>

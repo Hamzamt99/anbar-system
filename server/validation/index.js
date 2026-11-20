@@ -73,6 +73,10 @@ export const invoiceInput = z
       .union([time, z.literal("")])
       .optional()
       .default(""),
+    factory_arrival: z
+      .union([time, z.literal(""), z.null()])
+      .optional()
+      .transform((value) => value ?? ""),
     finish: z
       .union([time, z.literal("")])
       .optional()

@@ -3,7 +3,8 @@ import { Link, useLocation, useParams } from "react-router-dom";
 import { api, amount } from "../api";
 import { useAuth } from "../main";
 import { ErrorBox } from "../components/UI";
-import { Logo, waitForLogo } from "../components/Brand";
+import { waitForLogo } from "../components/Brand";
+import logoSource from "../assets/anbar-logo.png";
 import { quantityWords } from "../components/quantityWords";
 export default function Receipt() {
   const { id } = useParams(),
@@ -12,6 +13,7 @@ export default function Receipt() {
     [row, setRow] = useState(null),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
+    [logoFailed, setLogoFailed] = useState(false),
     printed = useRef(false);
   useEffect(() => {
     let alive = true;
@@ -25,7 +27,7 @@ export default function Receipt() {
   useEffect(() => {
     if (row && location.search.includes("print=1") && !printed.current) {
       printed.current = true;
-      Promise.all([document.fonts.ready, waitForLogo()])
+      preparePrint()
         .then(() => window.print())
         .catch((error) => {
           printed.current = false;
@@ -33,13 +35,22 @@ export default function Receipt() {
         });
     }
   }, [row, location.search]);
+  async function preparePrint() {
+    await document.fonts.ready;
+    try {
+      await waitForLogo();
+    } catch {
+      setLogoFailed(true);
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+    }
+  }
   async function print() {
     setBusy(true);
     try {
       setRow(
         (await api(`/invoices/${id}/print`, { method: "POST", body: {} })).data,
       );
-      await Promise.all([document.fonts.ready, waitForLogo()]);
+      await preparePrint();
       window.print();
     } catch (e) {
       setError(e.message);
@@ -88,15 +99,28 @@ export default function Receipt() {
         <article className="receipt">
           <div className="receipt-heading">
             <h1>شهادة استلام</h1>
-            <b className="receipt-company">
-              <Logo small />
-              <span>شركة العنبر للخرسانة</span>
-            </b>
+            <div className="receipt-logo">
+              {logoFailed ? (
+                <span className="receipt-logo-fallback">
+                  شركة العنبر للخرسانة
+                </span>
+              ) : (
+                <img
+                  src={logoSource}
+                  width="1435"
+                  height="1096"
+                  alt="شركة العنبر للخرسانة"
+                  onError={() => setLogoFailed(true)}
+                />
+              )}
+            </div>
+            <div className="receipt-number">
+              رقم الفاتورة: <bdi dir="ltr">{row.number}</bdi>
+            </div>
           </div>
           <div className="receipt-main">
             <div className="receipt-data">
               {[
-                ["رقم الفاتورة", <bdi dir="ltr">{row.number}</bdi>],
                 ["التاريخ", row.date.split("-").reverse().join("/")],
                 ["اسم المستهلك", row.customer_name],
                 ["مكان الصب", row.pour_location],
@@ -132,6 +156,7 @@ export default function Receipt() {
           <div className="receipt-times">
             {line("ساعة مغادرة المصنع", row.departure)}
             {line("ساعة الوصول إلى موقع الصب", row.arrival)}
+            {line("ساعة الوصول إلى المصنع", row.factory_arrival)}
             {line("ساعة انتهاء تفريغ الحمولة", row.finish)}
           </div>
           <div className="receipt-additional">

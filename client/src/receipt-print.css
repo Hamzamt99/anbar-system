@@ -1,0 +1,307 @@
+/* Receipt-only screen chrome. Application page layouts remain untouched. */
+.receipt-logo {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 170px;
+}
+.receipt-logo img {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+.receipt-logo-fallback {
+  display: block;
+  font-weight: 700;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.receipt-number {
+  text-align: right;
+  font-family: "Noto Sans Arabic", sans-serif;
+  font-size: 11px;
+  font-weight: 400;
+  margin-top: 10px;
+}
+@media screen and (max-width: 900px) {
+  .receipt-logo {
+    position: static;
+    width: 170px;
+    margin: 10px auto;
+  }
+}
+
+@page {
+  size: 22cm 19cm;
+  margin: 0.5cm;
+}
+@media print {
+  html,
+  body,
+  #root {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+    color: #000;
+  }
+  html,
+  body {
+    width: auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+  }
+  .shell {
+    width: auto !important;
+    max-width: none !important;
+    min-height: 0 !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+  }
+  header,
+  .receipt-controls,
+  .error,
+  dialog {
+    display: none !important;
+  }
+  main {
+    margin: 0 !important;
+    padding: 0 !important;
+    min-width: 0 !important;
+  }
+  main > :not(.receipt) {
+    display: none !important;
+  }
+  .receipt {
+    --receipt-font: 4.1mm;
+    --receipt-leading: 5.5mm;
+    box-sizing: border-box;
+    width: 210mm !important;
+    max-width: 100% !important;
+    min-height: 0 !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 2mm !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: #fff !important;
+    color: #000;
+    direction: rtl;
+    font-family: Amiri, serif;
+    font-size: var(--receipt-font) !important;
+    line-height: var(--receipt-leading) !important;
+    transform: none !important;
+    overflow: visible !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    break-after: auto;
+  }
+  .receipt * {
+    box-sizing: border-box;
+  }
+  .receipt-heading {
+    position: relative;
+    min-height: 18mm;
+    margin: 0 0 2mm;
+    text-align: center;
+  }
+  .receipt-heading h1 {
+    margin: 0;
+    padding: 0;
+    font-family: Amiri, serif;
+    font-size: 8mm;
+    line-height: 11mm;
+    font-weight: 400;
+    text-align: center;
+  }
+  .receipt-logo {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 50mm;
+    margin: 0;
+  }
+  .receipt-logo img {
+    display: block;
+    width: 50mm;
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;
+    border: 0;
+    background: transparent;
+  }
+  .receipt-logo-fallback {
+    padding-top: 5mm;
+    font-size: 5mm;
+    line-height: 7mm;
+  }
+  .receipt-number {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    margin: 0;
+    font-size: 2.8mm;
+    line-height: 4mm;
+    color: #222;
+  }
+  .receipt-main {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1.22fr) minmax(0, 0.88fr) !important;
+    column-gap: 12mm !important;
+    row-gap: 0 !important;
+    margin: 0;
+    align-items: start;
+  }
+  .receipt-data {
+    min-width: 0;
+  }
+  .receipt .receipt-line {
+    display: grid !important;
+    grid-template-columns: minmax(0, 35mm) minmax(0, 1fr) !important;
+    align-items: baseline;
+    column-gap: 1.5mm !important;
+    row-gap: 0 !important;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    font-size: var(--receipt-font) !important;
+    line-height: var(--receipt-leading) !important;
+  }
+  .receipt-data .receipt-line {
+    min-height: 6mm;
+  }
+  .receipt .receipt-line > span {
+    width: auto !important;
+    min-width: 0;
+    white-space: normal !important;
+    overflow-wrap: anywhere;
+    font-weight: 400;
+  }
+  .receipt .receipt-line > strong {
+    display: block;
+    min-width: 0 !important;
+    min-height: 5.5mm !important;
+    height: auto;
+    margin: 0;
+    padding: 0 0.5mm;
+    text-align: center;
+    font-size: var(--receipt-font) !important;
+    line-height: var(--receipt-leading) !important;
+    font-weight: 700;
+    border-bottom: 0.2mm dotted #555;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .receipt-quantities {
+    min-width: 0;
+    padding: 24mm 0 0 !important;
+  }
+  .receipt-quantities table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 0.25mm solid #111;
+    table-layout: fixed;
+    font-size: 4.3mm;
+  }
+  .receipt .receipt-quantities td {
+    height: 8mm;
+    padding: 1mm 1.5mm;
+    border: 0.25mm solid #111;
+    background: #fff;
+    font-family: Amiri, serif;
+    font-size: 4.3mm !important;
+    line-height: 5.5mm;
+    font-weight: 400;
+    overflow-wrap: anywhere;
+  }
+  .receipt .receipt-quantities td:last-child {
+    width: 35%;
+    text-align: center;
+    font-family: "Noto Sans Arabic", sans-serif;
+    font-size: 3.8mm !important;
+    font-weight: 700;
+  }
+  .receipt-quantities p {
+    margin: 4mm 0 1mm;
+    font-size: 3.8mm;
+    line-height: 5mm;
+  }
+  .receipt .words {
+    min-height: 6mm;
+    margin: 0;
+    padding: 0 1mm 1mm;
+    border-bottom: 0.2mm dotted #555;
+    font-size: 3.8mm;
+    line-height: 5mm;
+    overflow-wrap: anywhere;
+  }
+  .receipt-times {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    column-gap: 8mm !important;
+    row-gap: 2mm !important;
+    margin: 3mm 0 0;
+    padding: 2.5mm 0;
+    border-top: 0.2mm solid #555;
+    border-bottom: 0.2mm solid #555;
+    font-size: var(--receipt-font) !important;
+  }
+  .receipt .receipt-times .receipt-line {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 28mm) !important;
+  }
+  .receipt-additional {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    column-gap: 8mm !important;
+    row-gap: 0 !important;
+    padding: 3mm 0 0;
+    margin: 0;
+    font-size: var(--receipt-font) !important;
+  }
+  .receipt .receipt-additional .receipt-line {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 46mm) !important;
+  }
+  .receipt .declaration {
+    margin: 3mm 0 0;
+    text-align: center;
+    font-size: 4.5mm;
+    line-height: 6mm;
+  }
+  .receipt .signatures {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 32mm !important;
+    margin: 3mm 8mm 0;
+    text-align: center;
+    font-size: 4.3mm;
+    line-height: 6mm;
+  }
+  .receipt .signatures strong {
+    display: block;
+    min-height: 12mm;
+    padding: 2mm 0 0;
+    margin: 0;
+    font-weight: 400;
+    font-size: 4.3mm;
+    line-height: 5.5mm;
+    border-bottom: 0.2mm dotted #555;
+    overflow-wrap: anywhere;
+  }
+  .receipt table,
+  .receipt tr,
+  .receipt-line,
+  .receipt-heading,
+  .receipt-times,
+  .receipt-additional,
+  .signatures {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}

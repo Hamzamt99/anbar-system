@@ -300,6 +300,60 @@ test("invoices require exactly the specified manual fields and allow omitted opt
     status: 400,
   });
 });
+test("factory arrival is optional, validated, editable, and included in audit snapshots", async () => {
+  const body = invoice({ date: "2026-12-02", factory_arrival: "17:20" });
+  const row = (await call("/invoices", { method: "POST", body })).data;
+  assert.equal(row.factory_arrival, "17:20");
+  assert.equal(
+    (await call("/invoices/" + row.id)).data.factory_arrival,
+    "17:20",
+  );
+  const edited = (
+    await call("/invoices/" + row.id, {
+      role: "ADMIN",
+      method: "PUT",
+      body: { ...body, factory_arrival: "17:35" },
+    })
+  ).data;
+  assert.equal(edited.factory_arrival, "17:35");
+  const logs = (await call("/audit-logs?invoice_id=" + row.id)).data;
+  assert.equal(logs[0].before.factory_arrival, "17:20");
+  assert.equal(logs[0].after.factory_arrival, "17:35");
+  await call("/invoices/" + row.id, {
+    role: "DATA_ENTRY",
+    method: "PUT",
+    body,
+    status: 403,
+  });
+  for (const value of ["24:00", "12:60", "8:05", "17:05:10", 42])
+    await call("/invoices", {
+      method: "POST",
+      body: { ...body, factory_arrival: value },
+      status: 400,
+    });
+  const optional = (
+    await call("/invoices", {
+      method: "POST",
+      body: invoice({ date: "2026-12-03" }),
+    })
+  ).data;
+  assert.equal(optional.factory_arrival, "");
+  const nullable = (
+    await call("/invoices", {
+      method: "POST",
+      body: { ...body, factory_arrival: null },
+    })
+  ).data;
+  assert.equal(nullable.factory_arrival, "");
+  await db
+    .prepare("UPDATE invoices SET factory_arrival=NULL WHERE id=?")
+    .bind(optional.id)
+    .run();
+  assert.equal(
+    (await call("/invoices/" + optional.id)).data.factory_arrival,
+    null,
+  );
+});
 test("parallel invoice writes maintain correct integer totals", async () => {
   const created = await Promise.all(
     Array.from({ length: 8 }, () =>
