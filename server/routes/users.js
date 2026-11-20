@@ -38,14 +38,24 @@ export function userRoutes(db) {
     const result = await db.batch([
       db
         .prepare(
-          "UPDATE users SET email=?,role=?,updated_at=CURRENT_TIMESTAMP WHERE id=? RETURNING id,email,role",
+          "UPDATE users SET email=?,role=?,updated_at=CURRENT_TIMESTAMP WHERE id=? AND (role<>'SUPER_ADMIN' OR ?='SUPER_ADMIN') RETURNING id,email,role",
         )
-        .bind(v.email, v.role, uid),
+        .bind(v.email, v.role, uid, v.role),
       db
-        .prepare("DELETE FROM sessions WHERE user_id=? AND user_id<>?")
-        .bind(uid, req.user.id),
+        .prepare(
+          "DELETE FROM sessions WHERE user_id=? AND user_id<>? AND EXISTS(SELECT 1 FROM users WHERE id=? AND email=? AND role=?)",
+        )
+        .bind(uid, req.user.id, uid, v.email, v.role),
     ]);
-    if (!result[0].results.length) throw fail(404, "المستخدم غير موجود");
+    if (!result[0].results.length) {
+      const target = await db
+        .prepare("SELECT role FROM users WHERE id=?")
+        .bind(uid)
+        .first();
+      if (target?.role === "SUPER_ADMIN")
+        throw fail(403, "لا يمكن تخفيض دور مدير النظام العام من خلال النظام");
+      throw fail(404, "المستخدم غير موجود");
+    }
     res.json({ data: result[0].results[0] });
   });
   r.post("/:id/password", async (req, res) => {
@@ -65,8 +75,19 @@ export function userRoutes(db) {
   r.delete("/:id", async (req, res) => {
     const uid = parse(id, req.params.id);
     if (uid === req.user.id) throw fail(400, "لا يمكنك حذف حسابك الحالي");
-    const x = await db.prepare("DELETE FROM users WHERE id=?").bind(uid).run();
-    if (!x.meta.changes) throw fail(404, "المستخدم غير موجود");
+    const x = await db
+      .prepare("DELETE FROM users WHERE id=? AND role<>'SUPER_ADMIN'")
+      .bind(uid)
+      .run();
+    if (!x.meta.changes) {
+      const target = await db
+        .prepare("SELECT role FROM users WHERE id=?")
+        .bind(uid)
+        .first();
+      if (target?.role === "SUPER_ADMIN")
+        throw fail(403, "لا يمكن حذف مدير النظام العام من خلال النظام");
+      throw fail(404, "المستخدم غير موجود");
+    }
     res.json({ data: true });
   });
   return r;

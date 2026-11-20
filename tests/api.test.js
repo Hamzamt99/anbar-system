@@ -621,7 +621,7 @@ test("audit logs attribute invoice changes, remain immutable, and restrict acces
       body: {
         email: "audit-actor@example.com",
         password: secret,
-        role: "SUPER_ADMIN",
+        role: "ADMIN",
       },
     })
   ).data;
@@ -638,7 +638,7 @@ test("audit logs attribute invoice changes, remain immutable, and restrict acces
   });
   await call("/users/" + actor.id, {
     method: "PUT",
-    body: { email: "renamed-actor@example.com", role: "SUPER_ADMIN" },
+    body: { email: "renamed-actor@example.com", role: "ADMIN" },
   });
   await call("/users/" + actor.id, { method: "DELETE", body: {} });
   const retained = (await call("/audit-logs?email=audit-actor%40example.com"))
@@ -669,4 +669,85 @@ test("audit logs attribute invoice changes, remain immutable, and restrict acces
   const page2 = await call("/audit-logs?page=2");
   assert.ok(page2.data.length > 0);
   assert.ok(!page2.data.some((x) => page1.data.some((y) => x.id === y.id)));
+});
+
+test("Super Admin accounts cannot be deleted or downgraded through the API", async () => {
+  const target = (
+    await call("/users", {
+      method: "POST",
+      body: {
+        email: "protected-super@example.com",
+        password: secret,
+        role: "SUPER_ADMIN",
+      },
+    })
+  ).data;
+  const session = await call("/auth/login", {
+    role: "none",
+    method: "POST",
+    body: { email: target.email, password: secret },
+  });
+  cookies.PROTECTED = session.cookie.split(";")[0];
+  await call("/users/" + target.id, {
+    method: "DELETE",
+    body: {},
+    status: 403,
+  });
+  for (const role of ["ADMIN", "DATA_ENTRY"])
+    await call("/users/" + target.id, {
+      method: "PUT",
+      body: { email: target.email, role },
+      status: 403,
+    });
+  assert.equal(
+    (await call("/auth/me", { role: "PROTECTED" })).data.role,
+    "SUPER_ADMIN",
+    "Rejected changes must not revoke the target session",
+  );
+  const retained = (await call("/users")).data.find(
+    (user) => user.id === target.id,
+  );
+  assert.equal(retained.role, "SUPER_ADMIN");
+  assert.equal(retained.email, target.email);
+  await call("/users/" + target.id, {
+    method: "PUT",
+    body: { email: "protected-renamed@example.com", role: "SUPER_ADMIN" },
+  });
+  await call("/users/" + target.id + "/password", {
+    method: "POST",
+    body: { password: "New-protected-password-2026" },
+  });
+  await call("/auth/login", {
+    role: "none",
+    method: "POST",
+    body: {
+      email: "protected-renamed@example.com",
+      password: "New-protected-password-2026",
+    },
+  });
+  const promoted = (
+    await call("/users", {
+      method: "POST",
+      body: {
+        email: "promoted-super@example.com",
+        password: secret,
+        role: "ADMIN",
+      },
+    })
+  ).data;
+  await call("/users/" + promoted.id, {
+    method: "PUT",
+    body: { email: promoted.email, role: "SUPER_ADMIN" },
+  });
+  await call("/users/" + promoted.id, {
+    method: "DELETE",
+    body: {},
+    status: 403,
+  });
+  await call("/users/" + promoted.id, {
+    method: "PUT",
+    body: { email: promoted.email, role: "DATA_ENTRY" },
+    status: 403,
+  });
+  await call("/users/2147483647", { method: "DELETE", body: {}, status: 404 });
 });

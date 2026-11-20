@@ -245,6 +245,45 @@ try {
     data: { email: "manager@example.com", password, role: "ADMIN" },
   });
   assert.equal(adminCreated.status(), 201);
+  const protectedCreated = await page.request.post(base + "/api/users", {
+    data: {
+      email: "protected-super@example.com",
+      password,
+      role: "SUPER_ADMIN",
+    },
+  });
+  assert.equal(protectedCreated.status(), 201);
+  await page.reload();
+  await page
+    .getByRole("cell", { name: "protected-super@example.com", exact: true })
+    .waitFor();
+  for (const address of ["qa@example.com", "protected-super@example.com"]) {
+    const row = page.getByRole("row").filter({ hasText: address });
+    assert.equal(
+      await row.getByRole("button", { name: "حذف", exact: true }).count(),
+      0,
+    );
+    await row.getByRole("button", { name: "تعديل", exact: true }).click();
+    assert.equal(
+      await page
+        .getByRole("dialog")
+        .getByLabel("الدور", { exact: true })
+        .isDisabled(),
+      true,
+    );
+    await page
+      .getByRole("dialog")
+      .getByRole("button", { name: "إغلاق" })
+      .click();
+  }
+  assert.equal(
+    await page
+      .getByRole("row")
+      .filter({ hasText: "entry@example.com" })
+      .getByRole("button", { name: "حذف", exact: true })
+      .count(),
+    1,
+  );
   await checkMobilePages(page, { base, out, invoiceId });
   await page.setViewportSize({ width: 390, height: 844 });
   await openNavigation(page);

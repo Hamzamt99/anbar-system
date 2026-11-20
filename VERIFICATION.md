@@ -101,3 +101,12 @@ Final verification artifacts (generated, not committed):
 - `output/pdf/anbar-receipt-long-220x190.pdf`
 - `tmp/receipt-print-verification.json` — browser geometry and fixture lengths.
 - `tmp/receipt-pdf-verification.json` — exact final PDF dimensions and content-stream checks.
+
+## Protected Super Admin accounts — 20 November 2026
+
+- All `SUPER_ADMIN` rows hide the Delete action, including a different Super Admin's account. Ordinary-user deletion remains available.
+- The backend atomically excludes `SUPER_ADMIN` targets from DELETE. Existing Super Admins cannot be downgraded through PUT, preventing downgrade-then-delete bypasses; the role selector is locked for those accounts.
+- Rejected downgrades preserve the target's active sessions. Allowed email edits, password resets, and promotion of ordinary users still work. Direct database administration is unchanged; no migration or production account changes were performed.
+- `npm test`: all **13 API test groups** passed. New checks cover deletion and demotion by another Super Admin, session preservation, email/password maintenance, promotion protection, and nonexistent users. Existing auth, audit, invoice totals, print permissions, and factory-arrival tests pass.
+- `npm run test:browser`: passed desktop/mobile checks; verified no Delete action and a disabled role selector on both the signed-in and another Super Admin's row. Ordinary-user Delete remains visible.
+- Production build/deployment succeeded: version `72556dfb-9c2c-4304-b969-73f73e35901a`.

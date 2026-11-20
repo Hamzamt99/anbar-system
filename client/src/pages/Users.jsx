@@ -10,7 +10,7 @@ import {
   Empty,
 } from "../components/UI";
 const initial = { email: "", password: "", role: "DATA_ENTRY" };
-function UserFields({ value, onChange, edit = false }) {
+function UserFields({ value, onChange, edit = false, lockRole = false }) {
   return (
     <>
       <Field
@@ -36,6 +36,12 @@ function UserFields({ value, onChange, edit = false }) {
       <Field label="الدور">
         <select
           value={value.role}
+          disabled={lockRole}
+          title={
+            lockRole
+              ? "لا يمكن تخفيض دور مدير النظام العام من خلال النظام"
+              : undefined
+          }
           onChange={(e) => onChange({ ...value, role: e.target.value })}
         >
           {Object.entries(roles).map(([v, l]) => (
@@ -121,7 +127,10 @@ export default function Users() {
                   <td data-label="الإجراءات" className="actions">
                     <button
                       onClick={() => {
-                        setEdit(x);
+                        setEdit({
+                          ...x,
+                          protectedRole: x.role === "SUPER_ADMIN",
+                        });
                         setModalError("");
                       }}
                     >
@@ -135,7 +144,7 @@ export default function Users() {
                     >
                       إعادة تعيين كلمة المرور
                     </button>
-                    {x.id !== user.id && (
+                    {x.id !== user.id && x.role !== "SUPER_ADMIN" && (
                       <button className="danger" onClick={() => setRemove(x)}>
                         حذف
                       </button>
@@ -167,7 +176,12 @@ export default function Users() {
               }
             }}
           >
-            <UserFields edit value={edit} onChange={setEdit} />
+            <UserFields
+              edit
+              value={edit}
+              onChange={setEdit}
+              lockRole={edit.protectedRole}
+            />
             <ErrorBox error={modalError} />
             <div className="buttons">
               <button className="primary" disabled={busy}>

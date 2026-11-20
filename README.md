@@ -33,7 +33,7 @@ Local D1 data lives in `.wrangler/state` and is ignored by Git. `npm run db:loca
 
 `wrangler.jsonc` defines the Worker, compatibility date, `nodejs_compat`, `DB` binding, and SPA assets. `.env.example` documents optional local `.dev.vars` settings. There are no frontend secrets, hardcoded credentials, external font requests, or required session signing secrets. Session identifiers are 32 random bytes; only SHA-256 token digests are stored in D1.
 
-Production uses HTTPS and HttpOnly, SameSite=Strict cookies; secure cookies are set on HTTPS requests. Local HTTP permits development cookies. Sessions expire after eight hours. Password hashes use Web Crypto PBKDF2-SHA256, 100,000 iterations (Workers Web Crypto supported limit), random 128-bit salts, and a 256-bit result. Login throttles each IP/email pair to ten attempts per 15 minutes. Password resets revoke all sessions for that user; role changes revoke their other sessions. Destructive actions have a confirmation dialog, and a Super Admin cannot delete or demote their currently signed-in account.
+Production uses HTTPS and HttpOnly, SameSite=Strict cookies; secure cookies are set on HTTPS requests. Local HTTP permits development cookies. Sessions expire after eight hours. Password hashes use Web Crypto PBKDF2-SHA256, 100,000 iterations (Workers Web Crypto supported limit), random 128-bit salts, and a 256-bit result. Login throttles each IP/email pair to ten attempts per 15 minutes. Password resets revoke all sessions for that user; role changes revoke their other sessions. Destructive actions have a confirmation dialog, and Super Admin accounts cannot be deleted or demoted through the application or API. Email edits and password resets remain available.
 
 ## Cloudflare setup and deployment
 
@@ -97,7 +97,7 @@ npx wrangler deploy --dry-run --outdir tmp/worker-build
 npm audit
 ```
 
-`npm test` uses an isolated Miniflare D1 database with the real migrations and Express routes; it does not substitute a SQLite file or mock database. Twelve test groups cover authentication, cookies, CSRF, role permissions, master-data constraints, integer decimal quantities, customer/date resets, concurrent creation, old/new group recalculation, snapshot history, print locks, input validation, filtering, user lifecycle, logout, and session revocation.
+`npm test` uses an isolated Miniflare D1 database with the real migrations and Express routes; it does not substitute a SQLite file or mock database. Thirteen test groups cover authentication, cookies, CSRF, role permissions, master-data constraints, integer decimal quantities, customer/date resets, concurrent creation, old/new group recalculation, snapshot history, print locks, input validation, filtering, user lifecycle, logout, and session revocation.
 
 `npm run test:browser` builds the app, applies migrations to a disposable local D1, generates a random temporary test credential, and runs Chromium against a real Wrangler Worker on port 8788. It exercises all master tabs, invoice creation and preview, user creation, list filters, role route protection, mobile width, and print styles. Screenshots of all screens go to ignored `tmp/screenshots`. Invoice filter selectors include deleted customers and drivers for historical searches; new-invoice selectors show active records only. The test removes its disposable D1 state and credentials afterward; normal local and remote data remain untouched.
 
@@ -105,7 +105,7 @@ npm audit
 
 ## Deployment status
 
-Local migration, all twelve API test groups, the full browser workflow, the production build, and the Worker deployment dry run have passed. See [VERIFICATION.md](VERIFICATION.md) for the execution report.
+Local migration, all thirteen API test groups, the full browser workflow, the production build, and the Worker deployment dry run have passed. See [VERIFICATION.md](VERIFICATION.md) for the execution report.
 
 Production D1 migrations and Worker deployment have now completed with database `04b6d257-131e-4b69-9502-fd016f55ee0d`. Application URL: https://anbar-system.anbar-system.workers.dev. Create the first production Super Admin with `npm run admin -- --remote`.
 
@@ -148,3 +148,7 @@ tmp/pdf-venv/bin/python scripts/verify-receipt-pdfs.py
 ```
 
 Chromium's native export in the tested build rounds the PDF bounds to approximately 220.133 × 190.161 mm despite the exact CSS paper size. The verification script changes only the sample PDFs' page boxes to exactly 220 × 190 mm, preserving their content streams byte-for-byte (no scaling or Fit to page). It then verifies one page, safe text margins, the upper-left logo, the centered title, and all four time values. This is a local verification utility, not a new application PDF storage or export feature.
+
+## Protected Super Admin accounts
+
+Every `SUPER_ADMIN` account is protected from application/API deletion, including deletion by a different Super Admin. Its existing role cannot be downgraded through the application, preventing a downgrade-then-delete bypass. The users table hides Delete for every Super Admin, and editing an existing Super Admin keeps its role selector locked. Email edits and password resets still work. Regular accounts can still change roles or be deleted, and promoting an account to Super Admin makes it protected. Removing or downgrading a Super Admin requires direct, authorized database access; there is no application endpoint for this operation. No schema migration is required.
