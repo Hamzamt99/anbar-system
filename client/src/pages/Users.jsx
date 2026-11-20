@@ -125,25 +125,31 @@ export default function Users() {
                     <span className="badge">{roles[x.role]}</span>
                   </td>
                   <td data-label="الإجراءات" className="actions">
-                    <button
-                      onClick={() => {
-                        setEdit({
-                          ...x,
-                          protectedRole: x.role === "SUPER_ADMIN",
-                        });
-                        setModalError("");
-                      }}
-                    >
-                      تعديل
-                    </button>
-                    <button
-                      onClick={() => {
-                        setReset({ ...x, password: "" });
-                        setModalError("");
-                      }}
-                    >
-                      إعادة تعيين كلمة المرور
-                    </button>
+                    {x.role !== "SUPER_ADMIN" || x.id === user.id ? (
+                      <>
+                        <button
+                          onClick={() => {
+                            setEdit({
+                              ...x,
+                              protectedRole: x.role === "SUPER_ADMIN",
+                            });
+                            setModalError("");
+                          }}
+                        >
+                          تعديل
+                        </button>
+                        <button
+                          onClick={() => {
+                            setReset({ ...x, password: "" });
+                            setModalError("");
+                          }}
+                        >
+                          إعادة تعيين كلمة المرور
+                        </button>
+                      </>
+                    ) : (
+                      <span className="badge">حساب محمي</span>
+                    )}
                     {x.id !== user.id && x.role !== "SUPER_ADMIN" && (
                       <button className="danger" onClick={() => setRemove(x)}>
                         حذف

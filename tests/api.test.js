@@ -671,7 +671,7 @@ test("audit logs attribute invoice changes, remain immutable, and restrict acces
   assert.ok(!page2.data.some((x) => page1.data.some((y) => x.id === y.id)));
 });
 
-test("Super Admin accounts cannot be deleted or downgraded through the API", async () => {
+test("Super Admin accounts are self-managed and protected from other accounts", async () => {
   const target = (
     await call("/users", {
       method: "POST",
@@ -709,14 +709,52 @@ test("Super Admin accounts cannot be deleted or downgraded through the API", asy
   );
   assert.equal(retained.role, "SUPER_ADMIN");
   assert.equal(retained.email, target.email);
+  for (const email of [target.email, "forbidden-edit@example.com"])
+    await call("/users/" + target.id, {
+      method: "PUT",
+      body: { email, role: "SUPER_ADMIN" },
+      status: 403,
+    });
+  await call("/users/" + target.id + "/password", {
+    method: "POST",
+    body: { password: "Forbidden-reset-password-2026" },
+    status: 403,
+  });
+  assert.equal(
+    (await call("/auth/me", { role: "PROTECTED" })).data.email,
+    target.email,
+    "Denied requests must preserve the target session and account",
+  );
+  const untouched = await db
+    .prepare("SELECT password_hash FROM users WHERE id=?")
+    .bind(target.id)
+    .first();
+  assert.equal(await verifyPassword(secret, untouched.password_hash), true);
+  const caller = (await call("/auth/me")).data;
+  await call("/users/" + caller.id, {
+    role: "PROTECTED",
+    method: "PUT",
+    body: { email: "forbidden-caller@example.com", role: "SUPER_ADMIN" },
+    status: 403,
+  });
+  await call("/users/" + caller.id + "/password", {
+    role: "PROTECTED",
+    method: "POST",
+    body: { password: "Forbidden-reset-password-2026" },
+    status: 403,
+  });
+  assert.equal((await call("/auth/me")).data.email, caller.email);
   await call("/users/" + target.id, {
+    role: "PROTECTED",
     method: "PUT",
     body: { email: "protected-renamed@example.com", role: "SUPER_ADMIN" },
   });
   await call("/users/" + target.id + "/password", {
+    role: "PROTECTED",
     method: "POST",
     body: { password: "New-protected-password-2026" },
   });
+  await call("/auth/me", { role: "PROTECTED", status: 401 });
   await call("/auth/login", {
     role: "none",
     method: "POST",
@@ -735,10 +773,17 @@ test("Super Admin accounts cannot be deleted or downgraded through the API", asy
       },
     })
   ).data;
+  const oldSession = await call("/auth/login", {
+    role: "none",
+    method: "POST",
+    body: { email: promoted.email, password: secret },
+  });
+  cookies.PROMOTED = oldSession.cookie.split(";")[0];
   await call("/users/" + promoted.id, {
     method: "PUT",
     body: { email: promoted.email, role: "SUPER_ADMIN" },
   });
+  await call("/auth/me", { role: "PROMOTED", status: 401 });
   await call("/users/" + promoted.id, {
     method: "DELETE",
     body: {},

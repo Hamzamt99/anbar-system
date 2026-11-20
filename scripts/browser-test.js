@@ -263,6 +263,10 @@ try {
       await row.getByRole("button", { name: "حذف", exact: true }).count(),
       0,
     );
+    if (address === "protected-super@example.com") {
+      assert.equal(await row.getByRole("button").count(), 0);
+      continue;
+    }
     await row.getByRole("button", { name: "تعديل", exact: true }).click();
     assert.equal(
       await page

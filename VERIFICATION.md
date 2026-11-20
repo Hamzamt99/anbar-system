@@ -110,3 +110,13 @@ Final verification artifacts (generated, not committed):
 - `npm test`: all **13 API test groups** passed. New checks cover deletion and demotion by another Super Admin, session preservation, email/password maintenance, promotion protection, and nonexistent users. Existing auth, audit, invoice totals, print permissions, and factory-arrival tests pass.
 - `npm run test:browser`: passed desktop/mobile checks; verified no Delete action and a disabled role selector on both the signed-in and another Super Admin's row. Ordinary-user Delete remains visible.
 - Production build/deployment succeeded: version `72556dfb-9c2c-4304-b969-73f73e35901a`.
+
+## Self-managed Super Admin accounts — 20 November 2026
+
+- Super Admins can edit only their own Super Admin profile/email and password. Other Super Admin rows are read-only and show no edit, password-reset, or delete buttons. Ordinary-user management remains available.
+- Both email/role updates and password changes use atomic SQL predicates checking the target's current role and authenticated account ID. Another Super Admin cannot modify the account, even through a direct API request or a no-op edit.
+- Session revocation is gated by the successful preceding UPDATE within the same D1 batch. Rejected modifications leave the target's sessions untouched; ordinary role changes/promotions still revoke old sessions, and successful own-password changes revoke that account's sessions.
+- Deletion and demotion protection remains unchanged. No migration or production account mutation was required.
+- `npm test`: all **13 test groups passed**, including reciprocal cross-account denial, unchanged password/session on denial, own-email and own-password changes, promotion/session invalidation, and existing application regressions.
+- `npm run test:browser`: passed desktop/mobile checks. Confirmed the signed-in Super Admin retains edit controls and another Super Admin has no action buttons. Receipt-print and invoice permission checks also pass.
+- Production build/deployment succeeded: version `030024f2-ffe3-4adf-b481-b3dda8ecee6e`.
