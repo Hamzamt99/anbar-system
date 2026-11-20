@@ -1,31 +1,29 @@
 import React from "react";
+import logoSource from "../assets/anbar-logo.png";
+
 export function Logo({ small = false }) {
   return (
     <svg
       className={small ? "brand-mark small" : "brand-mark"}
-      viewBox="0 0 100 90"
+      viewBox={small ? "470 100 555 445" : "270 100 900 930"}
       aria-hidden="true"
+      focusable="false"
     >
-      <defs>
-        <linearGradient
-          id={small ? "gold-small" : "gold"}
-          x1="0"
-          y1="0"
-          x2="1"
-          y2="1"
-        >
-          <stop stopColor="#ed9b0a" />
-          <stop offset="1" stopColor="#bd6500" />
-        </linearGradient>
-      </defs>
-      <path
-        d="M10 67 35 10Q39 0 50 0T65 10L90 67H71L53 25Q50 18 47 25L29 67Z"
-        fill={`url(#${small ? "gold-small" : "gold"})`}
-      />
-      <path d="M8 74H92L98 88H2Z" fill="#283541" />
+      <image href={logoSource} width="1435" height="1096" />
     </svg>
   );
 }
+
+export async function waitForLogo() {
+  try {
+    const image = new Image();
+    image.src = logoSource;
+    await image.decode();
+  } catch {
+    throw new Error("تعذر تحميل شعار الشركة، يرجى المحاولة مجدداً");
+  }
+}
+
 export function FactoryBackground() {
   return (
     <svg

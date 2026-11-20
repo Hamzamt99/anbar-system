@@ -3,6 +3,7 @@ import { Link, useLocation, useParams } from "react-router-dom";
 import { api, amount } from "../api";
 import { useAuth } from "../main";
 import { ErrorBox } from "../components/UI";
+import { Logo, waitForLogo } from "../components/Brand";
 import { quantityWords } from "../components/quantityWords";
 export default function Receipt() {
   const { id } = useParams(),
@@ -24,7 +25,12 @@ export default function Receipt() {
   useEffect(() => {
     if (row && location.search.includes("print=1") && !printed.current) {
       printed.current = true;
-      document.fonts.ready.then(() => window.print());
+      Promise.all([document.fonts.ready, waitForLogo()])
+        .then(() => window.print())
+        .catch((error) => {
+          printed.current = false;
+          setError(error.message);
+        });
     }
   }, [row, location.search]);
   async function print() {
@@ -33,7 +39,7 @@ export default function Receipt() {
       setRow(
         (await api(`/invoices/${id}/print`, { method: "POST", body: {} })).data,
       );
-      await document.fonts.ready;
+      await Promise.all([document.fonts.ready, waitForLogo()]);
       window.print();
     } catch (e) {
       setError(e.message);
@@ -82,7 +88,10 @@ export default function Receipt() {
         <article className="receipt">
           <div className="receipt-heading">
             <h1>شهادة استلام</h1>
-            <b>شركة العنبر للخرسانة</b>
+            <b className="receipt-company">
+              <Logo small />
+              <span>شركة العنبر للخرسانة</span>
+            </b>
           </div>
           <div className="receipt-main">
             <div className="receipt-data">

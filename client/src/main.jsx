@@ -30,6 +30,7 @@ import Receipt from "./pages/Receipt";
 import AuditLogs from "./pages/AuditLogs";
 import "./style.css";
 import "./mobile.css";
+import "./branding.css";
 import { Logo, FactoryBackground } from "./components/Brand";
 const Auth = createContext();
 export const useAuth = () => useContext(Auth);
