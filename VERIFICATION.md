@@ -128,3 +128,7 @@ Final verification artifacts (generated, not committed):
 - `npm test`: 14 groups passed, including mixer permissions, invalid/deleted references, edit/clear, historical snapshots and audit data. Full browser workflow passed with all six master tabs, plus mobile checks at 320/390/768px and existing quantity/permission/print-lock checks.
 - Normal and long Arabic receipt PDFs verified as one exact 220 × 190 mm page using the existing page-box normalization utility, content streams unchanged. Long receipt rendered and visually inspected: upper-left logo, centered title, mixer below pump, safe text/signature margins, no clipping or browser controls. Slightly reduced receipt row/time/signature spacing to accommodate the additional row without changing paper size or font size.
 - Deployed production Worker version `4a5bec3a-6860-4a49-8243-4cae9f110076`; homepage and assets checked over HTTP.
+
+## Invoice form placement correction — 2026-11-22
+
+The mixer selector is a normal grid field beside the pump selector. All six selectors occupy the desktop first row, placing the date on the next row below the customer name. Removed the pump/mixer wrapper and its unused styles. The receipt continues to show mixer below pump. Visually inspected the 1440px form screenshot; the full browser workflow, mobile checks at 320/390/768px, and custom receipt checks passed. No API, database or receipt layout changes were needed.

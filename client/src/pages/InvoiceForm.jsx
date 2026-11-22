@@ -183,40 +183,16 @@ export default function InvoiceForm() {
       {notice && <p role="status">{notice}</p>}
       <form onSubmit={save}>
         <Section title="البيانات الأساسية" kind="basic">
-          {refs
-            .filter(([key]) => key !== "mixer_id")
-            .map(([key, path, label]) =>
-              key === "pump_id" ? (
-                <div className="pump-selectors" key={key}>
-                  <SearchSelect
-                    label={label}
-                    required
-                    items={masters[path] || []}
-                    value={form[key]}
-                    onChange={(value) =>
-                      setForm((f) => ({ ...f, [key]: value }))
-                    }
-                  />
-                  <SearchSelect
-                    label="رقم المكسر"
-                    items={masters.mixers || []}
-                    value={form.mixer_id}
-                    onChange={(value) =>
-                      setForm((f) => ({ ...f, mixer_id: value }))
-                    }
-                  />
-                </div>
-              ) : (
-                <SearchSelect
-                  key={key}
-                  label={label}
-                  required
-                  items={masters[path] || []}
-                  value={form[key]}
-                  onChange={(value) => setForm((f) => ({ ...f, [key]: value }))}
-                />
-              ),
-            )}
+          {refs.map(([key, path, label]) => (
+            <SearchSelect
+              key={key}
+              label={label}
+              required={key !== "mixer_id"}
+              items={masters[path] || []}
+              value={form[key]}
+              onChange={(value) => setForm((f) => ({ ...f, [key]: value }))}
+            />
+          ))}
           {input("date", "التاريخ", { type: "date", required: true })}
         </Section>
         <Section

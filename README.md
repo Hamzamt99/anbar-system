@@ -155,4 +155,4 @@ Every `SUPER_ADMIN` account is protected from application/API deletion, includin
 
 ## Mixer numbers
 
-Manage mixer numbers under **البيانات الأساسية → المكسر**. The optional searchable **رقم المكسر** selector appears directly below **رقم المضخة** in invoice creation and editing, and the saved value appears on the receipt and in invoice audit snapshots. Migration `0005_mixers.sql` adds the master table and nullable invoice reference with a name snapshot, preserving older invoices and historical selections after master rename or soft deletion.
+Manage mixer numbers under **البيانات الأساسية → المكسر**. The optional searchable **رقم المكسر** selector appears beside **رقم المضخة** in invoice creation and editing, with the date on the following row below the customer, and the saved value appears on the receipt and in invoice audit snapshots. Migration `0005_mixers.sql` adds the master table and nullable invoice reference with a name snapshot, preserving older invoices and historical selections after master rename or soft deletion.
