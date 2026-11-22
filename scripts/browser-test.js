@@ -92,7 +92,7 @@ try {
   await page
     .getByRole("heading", { name: "البيانات الأساسية", exact: true })
     .waitFor();
-  assert.equal(await page.getByRole("combobox").count(), 5);
+  assert.equal(await page.getByRole("combobox").count(), 6);
   assert.equal(
     await page.getByLabel("الواصل سابقاً").getAttribute("readonly"),
     "",
@@ -107,6 +107,7 @@ try {
     ["أنواع الخلطات", "إضافة خلطة", "نوع الخلطة", "C-250N"],
     ["السيارات", "إضافة سيارة", "رقم السيارة", "104"],
     ["المضخات", "إضافة مضخة", "رقم المضخة", "12"],
+    ["المكسر", "إضافة مكسر", "رقم المكسر", "MX-01"],
   ];
   await page
     .getByRole("link", { name: "البيانات الأساسية", exact: true })
@@ -373,7 +374,7 @@ try {
   await verifyReceiptPrint(browser, { base, password, out });
   assert.deepEqual(errors, []);
   console.log(
-    "Browser checks passed: login, all five master tabs, invoice creation, read-only preview, receipt, filters, users, role route protection, logout, mobile, print layout ADMIN print locking and invoice audit history. Screenshots: " +
+    "Browser checks passed: login, all six master tabs, invoice creation, read-only preview, receipt, filters, users, role route protection, logout, mobile, print layout ADMIN print locking and invoice audit history. Screenshots: " +
       out,
   );
 } catch (e) {

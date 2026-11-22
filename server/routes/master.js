@@ -8,6 +8,7 @@ export const masters = {
   "mix-types": "mix_types",
   vehicles: "vehicles",
   pumps: "pumps",
+  mixers: "mixers",
 };
 export function masterRoutes(db) {
   const r = Router();

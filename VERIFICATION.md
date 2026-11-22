@@ -2,19 +2,19 @@
 
 Implemented and validated in `/home/hamza/anbar-system`.
 
-| Command / check | Result |
-| --- | --- |
-| `npm install` | Dependencies installed; lockfile recorded |
-| Inspect and render all six design PDF pages | Completed before UI implementation |
-| `npm run db:local` | Initial migration applied; 22 D1 commands successful |
-| `npm run dev:api` | Express Worker and frontend running on localhost:8787 |
-| `npm test` | 9 integration test groups passed, 0 failures |
-| `npm run test:browser` | Passed against actual Wrangler Worker and disposable D1 |
-| `npm run build` | Production Vite build passed |
-| `npx wrangler deploy --dry-run --outdir tmp/worker-build` | Worker bundle and asset configuration accepted |
-| `npm audit` | 0 vulnerabilities after dependency updates |
-| `npm run format` | Source formatted |
-| `npx wrangler whoami` | Cloudflare login unavailable: stored token could not be refreshed |
+| Command / check                                           | Result                                                            |
+| --------------------------------------------------------- | ----------------------------------------------------------------- |
+| `npm install`                                             | Dependencies installed; lockfile recorded                         |
+| Inspect and render all six design PDF pages               | Completed before UI implementation                                |
+| `npm run db:local`                                        | Initial migration applied; 22 D1 commands successful              |
+| `npm run dev:api`                                         | Express Worker and frontend running on localhost:8787             |
+| `npm test`                                                | 9 integration test groups passed, 0 failures                      |
+| `npm run test:browser`                                    | Passed against actual Wrangler Worker and disposable D1           |
+| `npm run build`                                           | Production Vite build passed                                      |
+| `npx wrangler deploy --dry-run --outdir tmp/worker-build` | Worker bundle and asset configuration accepted                    |
+| `npm audit`                                               | 0 vulnerabilities after dependency updates                        |
+| `npm run format`                                          | Source formatted                                                  |
+| `npx wrangler whoami`                                     | Cloudflare login unavailable: stored token could not be refreshed |
 
 Browser validation covered sign-in, all five master tabs, invoice form submission, previews that preserve an empty printed timestamp, invoice lists and filters, user creation, role-protected routes, logout, mobile navigation, A4 dimensions, and Admin locking after an actual print-status API action. Screenshots in `tmp/screenshots` were visually inspected against every reference screen. Test credentials were random and the disposable browser database was removed afterward.
 
@@ -120,3 +120,11 @@ Final verification artifacts (generated, not committed):
 - `npm test`: all **13 test groups passed**, including reciprocal cross-account denial, unchanged password/session on denial, own-email and own-password changes, promotion/session invalidation, and existing application regressions.
 - `npm run test:browser`: passed desktop/mobile checks. Confirmed the signed-in Super Admin retains edit controls and another Super Admin has no action buttons. Receipt-print and invoice permission checks also pass.
 - Production build/deployment succeeded: version `030024f2-ffe3-4adf-b481-b3dda8ecee6e`.
+
+## Mixer master data — 2026-11-22
+
+- Added optional searchable رقم المكسر immediately below رقم المضخة, managed through البيانات الأساسية → المكسر. Invoice create/edit/read/receipt and audit snapshots retain the selection; renamed/deleted master records do not rewrite historical invoice values.
+- Additive migration `0005_mixers.sql` applied locally and remotely after a private production backup. Existing table row counts verified unchanged.
+- `npm test`: 14 groups passed, including mixer permissions, invalid/deleted references, edit/clear, historical snapshots and audit data. Full browser workflow passed with all six master tabs, plus mobile checks at 320/390/768px and existing quantity/permission/print-lock checks.
+- Normal and long Arabic receipt PDFs verified as one exact 220 × 190 mm page using the existing page-box normalization utility, content streams unchanged. Long receipt rendered and visually inspected: upper-left logo, centered title, mixer below pump, safe text/signature margins, no clipping or browser controls. Slightly reduced receipt row/time/signature spacing to accommodate the additional row without changing paper size or font size.
+- Deployed production Worker version `4a5bec3a-6860-4a49-8243-4cae9f110076`; homepage and assets checked over HTTP.

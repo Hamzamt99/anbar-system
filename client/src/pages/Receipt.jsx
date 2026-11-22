@@ -129,6 +129,7 @@ export default function Receipt() {
                 ["اسم السائق", row.driver_name],
                 ["رقم السيارة", row.vehicle_name],
                 ["رقم المضخة", row.pump_name],
+                ["رقم المكسر", row.mixer_name],
               ].map(([l, v]) => line(l, v))}
             </div>
             <div className="receipt-quantities">

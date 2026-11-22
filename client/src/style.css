@@ -969,3 +969,10 @@ dialog::backdrop {
   color: #687589;
   line-height: 1.7;
 }
+
+.pump-selectors {
+  display: grid;
+  gap: 18px;
+  align-content: start;
+  min-width: 0;
+}

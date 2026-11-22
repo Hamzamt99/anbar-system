@@ -23,8 +23,8 @@ export async function verifyReceiptPrint(browser, { base, password, out }) {
     assert.ok(response.ok(), JSON.stringify(result));
     return result;
   }
-  const [drivers, mixes, vehicles, pumps] = await Promise.all(
-    ["/drivers", "/mix-types", "/vehicles", "/pumps"].map((path) =>
+  const [drivers, mixes, vehicles, pumps, mixers] = await Promise.all(
+    ["/drivers", "/mix-types", "/vehicles", "/pumps", "/mixers"].map((path) =>
       request(path),
     ),
   );
@@ -50,6 +50,7 @@ export async function verifyReceiptPrint(browser, { base, password, out }) {
       mix_type_id: mixes.data[0].id,
       vehicle_id: vehicles.data[0].id,
       pump_id: pumps.data[0].id,
+      mixer_id: mixers.data[0].id,
       date: "2026-11-20",
       pour_location: locations[kind],
       requested: "125.5",

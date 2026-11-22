@@ -152,3 +152,7 @@ Chromium's native export in the tested build rounds the PDF bounds to approximat
 ## Protected Super Admin accounts
 
 Every `SUPER_ADMIN` account is protected from application/API deletion, including deletion by a different Super Admin. Its existing role cannot be downgraded through the application, preventing a downgrade-then-delete bypass. The users table hides Delete for every Super Admin, and editing an existing Super Admin keeps its role selector locked. Email edits and password changes are allowed only for that Super Admin account’s owner. Other Super Admin accounts appear read-only with no edit, password-reset, or delete actions. Denied requests do not revoke their sessions. Regular accounts can still change roles or be deleted, and promoting an account to Super Admin makes it protected. Removing or downgrading a Super Admin requires direct, authorized database access; there is no application endpoint for this operation. No schema migration is required.
+
+## Mixer numbers
+
+Manage mixer numbers under **البيانات الأساسية → المكسر**. The optional searchable **رقم المكسر** selector appears directly below **رقم المضخة** in invoice creation and editing, and the saved value appears on the receipt and in invoice audit snapshots. Migration `0005_mixers.sql` adds the master table and nullable invoice reference with a name snapshot, preserving older invoices and historical selections after master rename or soft deletion.

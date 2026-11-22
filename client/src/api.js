@@ -32,6 +32,7 @@ export const masterTypes = [
   ["mix-types", "أنواع الخلطات", "نوع الخلطة", "خلطة"],
   ["vehicles", "السيارات", "رقم السيارة", "سيارة"],
   ["pumps", "المضخات", "رقم المضخة", "مضخة"],
+  ["mixers", "المكسر", "رقم المكسر", "مكسر"],
 ];
 export const amount = (v) =>
   Number(v || 0).toLocaleString("en-US", {

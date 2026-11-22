@@ -175,7 +175,7 @@
     line-height: var(--receipt-leading) !important;
   }
   .receipt-data .receipt-line {
-    min-height: 6mm;
+    min-height: 5.5mm;
   }
   .receipt .receipt-line > span {
     width: auto !important;
@@ -248,7 +248,7 @@
     column-gap: 8mm !important;
     row-gap: 2mm !important;
     margin: 3mm 0 0;
-    padding: 2.5mm 0;
+    padding: 2mm 0;
     border-top: 0.2mm solid #555;
     border-bottom: 0.2mm solid #555;
     font-size: var(--receipt-font) !important;
@@ -278,7 +278,7 @@
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     column-gap: 32mm !important;
-    margin: 3mm 8mm 0;
+    margin: 2mm 8mm 0;
     text-align: center;
     font-size: 4.3mm;
     line-height: 6mm;

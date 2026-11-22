@@ -17,6 +17,7 @@ const initial = () => ({
   mix_type_id: "",
   vehicle_id: "",
   pump_id: "",
+  mixer_id: "",
   date: today(),
   pour_location: "",
   requested: "",
@@ -35,6 +36,7 @@ const refs = [
   ["driver_id", "drivers", "اسم السائق"],
   ["vehicle_id", "vehicles", "رقم السيارة"],
   ["pump_id", "pumps", "رقم المضخة"],
+  ["mixer_id", "mixers", "رقم المكسر"],
 ];
 function Section({ title, note, children, kind }) {
   return (
@@ -150,8 +152,13 @@ export default function InvoiceForm() {
     setNotice("");
     try {
       for (const [k, , label] of refs)
-        if (!form[k]) throw new Error(`يرجى اختيار ${label}`);
-      const body = { ...form, pump_id: form.pump_id || null };
+        if (k !== "mixer_id" && !form[k])
+          throw new Error(`يرجى اختيار ${label}`);
+      const body = {
+        ...form,
+        pump_id: form.pump_id || null,
+        mixer_id: form.mixer_id || null,
+      };
       const r = await api("/invoices" + (id ? "/" + id : ""), {
         method: id ? "PUT" : "POST",
         body,
@@ -176,16 +183,40 @@ export default function InvoiceForm() {
       {notice && <p role="status">{notice}</p>}
       <form onSubmit={save}>
         <Section title="البيانات الأساسية" kind="basic">
-          {refs.map(([key, path, label]) => (
-            <SearchSelect
-              key={key}
-              label={label}
-              required
-              items={masters[path] || []}
-              value={form[key]}
-              onChange={(value) => setForm((f) => ({ ...f, [key]: value }))}
-            />
-          ))}
+          {refs
+            .filter(([key]) => key !== "mixer_id")
+            .map(([key, path, label]) =>
+              key === "pump_id" ? (
+                <div className="pump-selectors" key={key}>
+                  <SearchSelect
+                    label={label}
+                    required
+                    items={masters[path] || []}
+                    value={form[key]}
+                    onChange={(value) =>
+                      setForm((f) => ({ ...f, [key]: value }))
+                    }
+                  />
+                  <SearchSelect
+                    label="رقم المكسر"
+                    items={masters.mixers || []}
+                    value={form.mixer_id}
+                    onChange={(value) =>
+                      setForm((f) => ({ ...f, mixer_id: value }))
+                    }
+                  />
+                </div>
+              ) : (
+                <SearchSelect
+                  key={key}
+                  label={label}
+                  required
+                  items={masters[path] || []}
+                  value={form[key]}
+                  onChange={(value) => setForm((f) => ({ ...f, [key]: value }))}
+                />
+              ),
+            )}
           {input("date", "التاريخ", { type: "date", required: true })}
         </Section>
         <Section

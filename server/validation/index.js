@@ -64,6 +64,7 @@ export const invoiceInput = z
     mix_type_id: id,
     vehicle_id: id,
     pump_id: id,
+    mixer_id: z.union([id, z.null()]).optional().default(null),
     date,
     pour_location: text,
     requested: quantity,

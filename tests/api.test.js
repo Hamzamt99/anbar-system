@@ -26,7 +26,7 @@ async function call(
     r.status,
     status ??
       (method === "POST" &&
-      /^\/(customers|drivers|mix-types|vehicles|pumps|users|invoices)$/.test(
+      /^\/(customers|drivers|mix-types|vehicles|pumps|mixers|users|invoices)$/.test(
         path,
       )
         ? 201
@@ -353,6 +353,53 @@ test("factory arrival is optional, validated, editable, and included in audit sn
     (await call("/invoices/" + optional.id)).data.factory_arrival,
     null,
   );
+});
+test("mixer choices validate, retain invoice snapshots and appear in audit logs", async () => {
+  await call("/mixers", {
+    role: "DATA_ENTRY",
+    method: "POST",
+    body: { name: "MX-01" },
+    status: 403,
+  });
+  const mixer = (
+    await call("/mixers", {
+      role: "ADMIN",
+      method: "POST",
+      body: { name: "MX-01" },
+    })
+  ).data;
+  assert.equal((await call("/mixers?search=MX-01")).data[0].id, mixer.id);
+  const body = invoice({ date: "2026-12-04", mixer_id: mixer.id });
+  const row = (await call("/invoices", { method: "POST", body })).data;
+  assert.equal(row.mixer_name, "MX-01");
+  await call("/mixers/" + mixer.id, {
+    method: "PUT",
+    body: { name: "MX-renamed" },
+  });
+  await call("/mixers/" + mixer.id, { method: "DELETE", body: {} });
+  const edited = (
+    await call("/invoices/" + row.id, {
+      method: "PUT",
+      body: { ...body, receiver: "مستلم جديد" },
+    })
+  ).data;
+  assert.equal(edited.mixer_name, "MX-01");
+  const logs = (await call("/audit-logs?invoice_id=" + row.id)).data;
+  assert.equal(logs[0].after.mixer_name, "MX-01");
+  await call("/invoices", { method: "POST", body, status: 400 });
+  await call("/invoices", {
+    method: "POST",
+    body: { ...body, mixer_id: -1 },
+    status: 400,
+  });
+  const cleared = (
+    await call("/invoices/" + row.id, {
+      method: "PUT",
+      body: { ...body, mixer_id: null },
+    })
+  ).data;
+  assert.equal(cleared.mixer_id, null);
+  assert.equal(cleared.mixer_name, "");
 });
 test("parallel invoice writes maintain correct integer totals", async () => {
   const created = await Promise.all(

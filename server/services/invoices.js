@@ -6,6 +6,7 @@ const refs = [
   ["mix_type", "mix_types"],
   ["vehicle", "vehicles"],
   ["pump", "pumps"],
+  ["mixer", "mixers"],
 ];
 export async function snapshots(db, v, old) {
   const names = {};
@@ -15,8 +16,8 @@ export async function snapshots(db, v, old) {
       names[`${key}_name`] = old[`${key}_name`];
       continue;
     }
-    if (value == null && key === "pump") {
-      names.pump_name = "";
+    if (value == null && (key === "pump" || key === "mixer")) {
+      names[`${key}_name`] = "";
       continue;
     }
     const row = await db
@@ -46,11 +47,13 @@ export const invoiceColumns = [
   "mix_type_id",
   "vehicle_id",
   "pump_id",
+  "mixer_id",
   "customer_name",
   "driver_name",
   "mix_type_name",
   "vehicle_name",
   "pump_name",
+  "mixer_name",
   "date",
   "pour_location",
   "requested",

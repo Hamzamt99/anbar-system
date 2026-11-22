@@ -13,6 +13,7 @@ const fields = {
   mix_type_name: "نوع الخلطة",
   vehicle_name: "رقم السيارة",
   pump_name: "رقم المضخة",
+  mixer_name: "رقم المكسر",
   date: "التاريخ",
   pour_location: "مكان الصب",
   requested: "الكمية المطلوبة",
