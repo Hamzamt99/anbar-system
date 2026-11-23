@@ -1,0 +1,27 @@
+{
+  "encrypted_export_round_trip_verified": true,
+  "down_up_migration_cycle_verified": true,
+  "environment": "two isolated local D1 databases",
+  "counts_and_relationships_match": true,
+  "foreign_key_errors": 0,
+  "restored_triggers_verified": true,
+  "export_restore_verify_ms": 11607,
+  "before": [
+    [
+      {
+        "users": 1,
+        "invoices": 2,
+        "customers": 1,
+        "drivers": 1,
+        "mixes": 1,
+        "vehicles": 1,
+        "pumps": 1,
+        "mixers": 0,
+        "audit_logs": 2,
+        "cumulative": 30000,
+        "triggers": 7
+      }
+    ],
+    []
+  ]
+}

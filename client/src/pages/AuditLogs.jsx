@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { api, amount } from "../api";
 import { Title, Field, ErrorBox, Empty, Modal } from "../components/UI";
@@ -58,17 +58,27 @@ export default function AuditLogs() {
     [loading, setLoading] = useState(true),
     [error, setError] = useState(""),
     [selected, setSelected] = useState(null);
+  const cursors = useRef({ 1: null });
+  const [hasMore, setHasMore] = useState(false);
   useEffect(() => {
+    const controller = new AbortController();
     let alive = true;
     setLoading(true);
     const query = new URLSearchParams(
-      Object.entries({ ...applied, page }).filter(([, value]) => value !== ""),
+      Object.entries({
+        ...applied,
+        page,
+        count: page === 1 ? "1" : "0",
+        ...(cursors.current[page] ? { cursor: cursors.current[page] } : {}),
+      }).filter(([, value]) => value !== ""),
     );
-    api("/audit-logs?" + query)
+    api("/audit-logs?" + query, { signal: controller.signal })
       .then((r) => {
         if (alive) {
           setRows(r.data);
-          setTotal(r.total);
+          if (r.total !== undefined) setTotal(r.total);
+          cursors.current[page + 1] = r.next_cursor;
+          setHasMore(r.has_more);
           setError("");
         }
       })
@@ -76,6 +86,7 @@ export default function AuditLogs() {
       .finally(() => alive && setLoading(false));
     return () => {
       alive = false;
+      controller.abort();
     };
   }, [applied, page]);
   const change = (key) => (e) =>
@@ -100,6 +111,7 @@ export default function AuditLogs() {
             setError("نطاق التاريخ غير صحيح");
             return;
           }
+          cursors.current = { 1: null };
           setApplied({ ...filter });
           setPage(1);
         }}
@@ -203,7 +215,7 @@ export default function AuditLogs() {
             {page} / {Math.ceil(total / 20)}
           </span>
           <button
-            disabled={page * 20 >= total || loading}
+            disabled={!hasMore || loading}
             onClick={() => setPage(page + 1)}
           >
             التالي

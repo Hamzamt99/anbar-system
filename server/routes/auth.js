@@ -5,13 +5,14 @@ import {
   hashPassword,
   token,
   digest,
+  needsRehash,
 } from "../services/crypto.js";
 export function authRoutes(db) {
   const r = Router();
   r.post("/login", async (req, res) => {
     const v = parse(login, req.body);
     const key = await digest(
-      `${req.headers["cf-connecting-ip"] || req.ip}:${v.email}`,
+      `${(req.app.locals.production ? req.headers["cf-connecting-ip"] : req.socket.remoteAddress) || "unknown"}:${v.email}`,
     );
     const now = Date.now();
     await db
@@ -31,23 +32,38 @@ export function authRoutes(db) {
       .bind(v.email)
       .first();
     const dummy =
-      "pbkdf2$100000$00000000000000000000000000000000$" + "0".repeat(64);
+      "pbkdf2$600000$00000000000000000000000000000000$" + "0".repeat(64);
     const valid = await verifyPassword(v.password, u?.password_hash || dummy);
+    if (u && !valid && needsRehash(u.password_hash))
+      await hashPassword(v.password, "0".repeat(32), 500000);
     if (!u || !valid)
       throw fail(401, "البريد الإلكتروني أو كلمة المرور غير صحيحة");
+    if (needsRehash(u.password_hash)) {
+      const upgraded = await hashPassword(v.password);
+      const changed = await db
+        .prepare(
+          "UPDATE users SET password_hash=? WHERE id=? AND password_hash=?",
+        )
+        .bind(upgraded, u.id, u.password_hash)
+        .run();
+      if (!changed.meta.changes) throw fail(401, "يرجى إعادة تسجيل الدخول");
+      u.password_hash = upgraded;
+    }
     const raw = token();
-    await db.batch([
+    const result = await db.batch([
       db.prepare("DELETE FROM sessions WHERE expires_at<?").bind(now),
+      db.prepare("DELETE FROM login_attempts WHERE reset_at<?").bind(now),
       db.prepare("DELETE FROM login_attempts WHERE key=?").bind(key),
       db
         .prepare(
-          "INSERT INTO sessions(token_hash,user_id,expires_at) VALUES(?,?,?)",
+          "INSERT INTO sessions(token_hash,user_id,expires_at) SELECT ?,id,? FROM users WHERE id=? AND password_hash=?",
         )
-        .bind(await digest(raw), u.id, now + 28800000),
+        .bind(await digest(raw), now + 28800000, u.id, u.password_hash),
     ]);
+    if (!result.at(-1).meta.changes) throw fail(401, "يرجى إعادة تسجيل الدخول");
     res.cookie("anbar_session", raw, {
       httpOnly: true,
-      secure: req.secure || req.headers["x-forwarded-proto"] === "https",
+      secure: req.app.locals.production || req.secure,
       sameSite: "strict",
       maxAge: 28800000,
       path: "/",

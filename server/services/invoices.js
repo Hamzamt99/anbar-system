@@ -33,7 +33,14 @@ export async function snapshots(db, v, old) {
 export function serialize(row) {
   if (!row) return row;
   return {
-    ...row,
+    ...Object.fromEntries(
+      Object.entries(row).filter(
+        ([key]) =>
+          !["idempotency_key", "request_hash", "creation_response"].includes(
+            key,
+          ),
+      ),
+    ),
     requested: row.requested / 1000,
     truck_load: row.truck_load / 1000,
     previous: row.previous / 1000,

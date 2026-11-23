@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { api, masterTypes } from "../api";
 import {
   Title,
@@ -18,11 +18,25 @@ export default function Master() {
     [remove, setRemove] = useState(null),
     [busy, setBusy] = useState(false),
     [formError, setFormError] = useState("");
+  const [page, setPage] = useState(1),
+    [hasMore, setHasMore] = useState(false);
+  const cursors = useRef({ 1: null });
+  const queryString = () =>
+    new URLSearchParams({
+      search,
+      limit: 50,
+      ...(cursors.current[page] ? { cursor: cursors.current[page] } : {}),
+    });
+  const accept = (r) => {
+    setRows(r.data);
+    setHasMore(r.has_more);
+    cursors.current[page + 1] = r.next_cursor;
+  };
   const type = masterTypes.find((x) => x[0] === tab);
   async function load() {
     setLoading(true);
     try {
-      setRows((await api(`/${tab}?search=${encodeURIComponent(search)}`)).data);
+      accept(await api(`/${tab}?` + queryString()));
       setError("");
     } catch (e) {
       setError(e.message);
@@ -31,13 +45,14 @@ export default function Master() {
     }
   }
   useEffect(() => {
+    const controller = new AbortController();
     let alive = true;
     setLoading(true);
     const timer = setTimeout(() => {
-      api(`/${tab}?search=${encodeURIComponent(search)}`)
+      api(`/${tab}?` + queryString(), { signal: controller.signal })
         .then((r) => {
           if (alive) {
-            setRows(r.data);
+            accept(r);
             setError("");
           }
         })
@@ -47,8 +62,9 @@ export default function Master() {
     return () => {
       alive = false;
       clearTimeout(timer);
+      controller.abort();
     };
-  }, [tab, search]);
+  }, [tab, search, page]);
   return (
     <>
       <Title subtitle="إدارة البيانات المستخدمة في الفواتير">
@@ -60,6 +76,8 @@ export default function Master() {
             className={tab === x[0] ? "active" : ""}
             key={x[0]}
             onClick={() => {
+              cursors.current = { 1: null };
+              setPage(1);
               setTab(x[0]);
               setSearch("");
             }}
@@ -73,7 +91,11 @@ export default function Master() {
           aria-label="بحث"
           className="search"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => {
+            cursors.current = { 1: null };
+            setPage(1);
+            setSearch(e.target.value);
+          }}
           placeholder={`بحث عن ${type[3]}...`}
         />
         <button
@@ -121,6 +143,23 @@ export default function Master() {
           </tbody>
         </table>
       </div>
+      {(page > 1 || hasMore) && (
+        <div className="pagination">
+          <button
+            disabled={page === 1 || loading}
+            onClick={() => setPage(page - 1)}
+          >
+            السابق
+          </button>
+          <span>{page}</span>
+          <button
+            disabled={!hasMore || loading}
+            onClick={() => setPage(page + 1)}
+          >
+            التالي
+          </button>
+        </div>
+      )}
       {edit && (
         <Modal
           title={`${edit.id ? "تعديل" : "إضافة"} ${type[3]}`}

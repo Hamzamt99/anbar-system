@@ -1,0 +1,18 @@
+{
+  "idempotency": [
+    "SEARCH invoices USING INDEX invoice_submission (created_by=? AND idempotency_key=?)"
+  ],
+  "session_revocation": [
+    "SEARCH sessions USING COVERING INDEX sessions_user (user_id=?)"
+  ],
+  "throttle_cleanup": [
+    "SEARCH login_attempts USING INDEX login_attempts_reset (reset_at<?)"
+  ],
+  "audit_action": [
+    "SEARCH audit_logs USING INDEX audit_action_order (action=?)"
+  ],
+  "session_user_lookup": [
+    "SEARCH s USING INDEX sqlite_autoindex_sessions_1 (token_hash=?)",
+    "SEARCH u USING INTEGER PRIMARY KEY (rowid=?)"
+  ]
+}

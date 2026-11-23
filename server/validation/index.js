@@ -87,6 +87,13 @@ export const invoiceInput = z
     receiver: z.string().trim().max(200).optional().default(""),
   })
   .strict();
+export const invoiceEdit = invoiceInput.extend({
+  version: z.number().int().positive(),
+});
+export const cursor = z
+  .string()
+  .max(500)
+  .regex(/^[A-Za-z0-9_-]+$/);
 export const filters = z
   .object({
     customer_id: id.optional(),
@@ -94,6 +101,12 @@ export const filters = z
     from: date.optional(),
     to: date.optional(),
     page: z.coerce.number().int().min(1).max(100000).default(1),
+    cursor: cursor.optional(),
+    count: z.enum(["0", "1"]).default("1"),
+    number: z
+      .string()
+      .regex(/^INV-\d{1,10}$/)
+      .optional(),
   })
   .strict()
   .refine((v) => !v.from || !v.to || v.from <= v.to, "نطاق التاريخ غير صحيح");

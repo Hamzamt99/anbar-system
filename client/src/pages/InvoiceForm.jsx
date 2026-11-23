@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api, masterTypes, amount } from "../api";
 import { addDepartureOffset } from "../../../shared/time.js";
@@ -55,6 +55,9 @@ function Section({ title, note, children, kind }) {
   );
 }
 export default function InvoiceForm() {
+  const submission = useRef({ key: crypto.randomUUID(), body: null });
+  const saving = useRef(false);
+  const [version, setVersion] = useState(null);
   const { id } = useParams(),
     { user } = useAuth(),
     navigate = useNavigate(),
@@ -71,9 +74,7 @@ export default function InvoiceForm() {
     let alive = true;
     setLoading(true);
     Promise.all([
-      Promise.all(
-        masterTypes.map(async ([key]) => [key, (await api("/" + key)).data]),
-      ),
+      Promise.all(masterTypes.map(async ([key]) => [key, []])),
       id ? api("/invoices/" + id) : Promise.resolve(null),
     ])
       .then(([list, result]) => {
@@ -81,6 +82,7 @@ export default function InvoiceForm() {
         const data = Object.fromEntries(list);
         if (result) {
           const row = result.data;
+          setVersion(row.version);
           for (const [key, path] of refs) {
             const prefix = key.replace("_id", "");
             if (row[key]) {
@@ -146,6 +148,8 @@ export default function InvoiceForm() {
   );
   async function save(e) {
     e.preventDefault();
+    if (saving.current) return;
+    saving.current = true;
     const preview = e.nativeEvent.submitter?.value === "preview";
     setBusy(true);
     setError("");
@@ -156,11 +160,20 @@ export default function InvoiceForm() {
           throw new Error(`يرجى اختيار ${label}`);
       const body = {
         ...form,
+        ...(id ? { version } : {}),
         pump_id: form.pump_id || null,
         mixer_id: form.mixer_id || null,
       };
+      const serialized = JSON.stringify(body);
+      if (
+        submission.current.body !== null &&
+        submission.current.body !== serialized
+      )
+        submission.current.key = crypto.randomUUID();
+      submission.current.body = serialized;
       const r = await api("/invoices" + (id ? "/" + id : ""), {
         method: id ? "PUT" : "POST",
+        headers: id ? {} : { "Idempotency-Key": submission.current.key },
         body,
       });
       if (preview) navigate(`/invoices/${r.data.id}/preview`);
@@ -170,6 +183,7 @@ export default function InvoiceForm() {
     } catch (e) {
       setError(e.message);
     } finally {
+      saving.current = false;
       setBusy(false);
     }
   }
@@ -188,6 +202,7 @@ export default function InvoiceForm() {
               key={key}
               label={label}
               required={key !== "mixer_id"}
+              source={"/" + path}
               items={masters[path] || []}
               value={form[key]}
               onChange={(value) => setForm((f) => ({ ...f, [key]: value }))}

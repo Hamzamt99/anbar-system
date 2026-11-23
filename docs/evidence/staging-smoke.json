@@ -1,0 +1,12 @@
+{
+  "hosted_legacy_and_new_password_logins": true,
+  "secure_cookies": true,
+  "legacy_rehash_verified": true,
+  "six_simultaneous_submissions_one_invoice": true,
+  "conflicting_edits_rejected": true,
+  "original_creation_replay_preserved": true,
+  "print_permissions_and_stable_totals": true,
+  "hosted_headers": true,
+  "elapsed_ms": 17084,
+  "environment": "Disposable remote staging Worker and D1; no production writes"
+}

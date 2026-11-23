@@ -1,0 +1,14 @@
+[
+  {
+    "transfer_bytes": 95281,
+    "duration_ms": 12.300000000745058
+  },
+  {
+    "transfer_bytes": 95281,
+    "duration_ms": 12.800000000745058
+  },
+  {
+    "transfer_bytes": 0,
+    "duration_ms": 1.5
+  }
+]

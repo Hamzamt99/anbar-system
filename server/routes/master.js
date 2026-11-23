@@ -1,3 +1,5 @@
+import { z } from "zod";
+import { encodeCursor, decodeCursor } from "../services/pagination.js";
 import { Router } from "express";
 import { allow } from "../middleware/auth.js";
 import { parse, nameInput, id, fail } from "../validation/index.js";
@@ -14,32 +16,55 @@ export function masterRoutes(db) {
   const r = Router();
   for (const [path, table] of Object.entries(masters)) {
     r.get(`/${path}`, async (req, res) => {
-      if (
-        Object.keys(req.query).some(
-          (k) => !["search", "include_deleted"].includes(k),
-        ) ||
-        (req.query.include_deleted !== undefined &&
-          req.query.include_deleted !== "1") ||
-        typeof (req.query.search ?? "") !== "string" ||
-        (req.query.search || "").length > 200
-      )
-        throw fail(400, "البحث غير صحيح");
-      if (req.query.include_deleted && req.user.role === "DATA_ENTRY")
+      const v = parse(
+        z
+          .object({
+            search: z.string().max(200).default(""),
+            include_deleted: z.literal("1").optional(),
+            cursor: z.string().max(1000).optional(),
+            limit: z.coerce.number().int().min(1).max(100).default(50),
+          })
+          .strict(),
+        req.query,
+      );
+      if (v.include_deleted && req.user.role === "DATA_ENTRY")
         throw fail(403, "ليس لديك صلاحية لهذا الإجراء");
+      const parts = [],
+        args = [];
+      if (!v.include_deleted) parts.push("deleted_at IS NULL");
+      if (v.search) {
+        parts.push("name LIKE ? ESCAPE '\\'");
+        args.push("%" + v.search.replace(/[\\%_]/g, "\\$&") + "%");
+      }
+      if (v.cursor) {
+        const p = decodeCursor(v.cursor, "master");
+        if (
+          typeof p?.name !== "string" ||
+          p.name.length > 200 ||
+          !Number.isSafeInteger(p.id) ||
+          p.id < 1
+        )
+          throw fail(400, "مؤشر الصفحة غير صحيح");
+        parts.push("(name COLLATE NOCASE,id)>(?,?)");
+        args.push(p.name, p.id);
+      }
+      const where = parts.length ? "WHERE " + parts.join(" AND ") : "";
+      const rows = (
+        await db
+          .prepare(
+            `SELECT id,name FROM ${table} ${where} ORDER BY name COLLATE NOCASE,id LIMIT ?`,
+          )
+          .bind(...args, v.limit + 1)
+          .all()
+      ).results;
+      const visible = rows.slice(0, v.limit);
       res.json({
-        data: (
-          await db
-            .prepare(
-              `SELECT id,name FROM ${table} WHERE (?=1 OR deleted_at IS NULL) AND name LIKE ? ORDER BY name`,
-            )
-            .bind(
-              req.query.include_deleted === "1" ? 1 : 0,
-              `%${req.query.search || ""}%`,
-            )
-            .all()
-        ).results,
+        data: visible,
+        has_more: rows.length > v.limit,
+        next_cursor: visible.length ? encodeCursor(visible.at(-1)) : null,
       });
     });
+
     r.post(`/${path}`, allow("ADMIN", "SUPER_ADMIN"), async (req, res) => {
       const { name } = parse(nameInput, req.body);
       const x = await db

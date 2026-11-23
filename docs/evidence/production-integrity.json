@@ -1,0 +1,6 @@
+{
+  "all_preexisting_business_columns_and_rows_unchanged": true,
+  "foreign_key_errors": 0,
+  "triggers": 7,
+  "migrations": 7
+}

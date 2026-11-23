@@ -65,9 +65,13 @@ export default function Users() {
     [reset, setReset] = useState(null),
     [remove, setRemove] = useState(null),
     [modalError, setModalError] = useState("");
+  const [page, setPage] = useState(1),
+    [total, setTotal] = useState(0);
   async function load() {
     try {
-      setRows((await api("/users")).data);
+      const result = await api("/users?page=" + page);
+      setRows(result.data);
+      setTotal(result.total);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -76,7 +80,7 @@ export default function Users() {
   }
   useEffect(() => {
     load();
-  }, []);
+  }, [page]);
   async function save(e) {
     e.preventDefault();
     setBusy(true);
@@ -162,6 +166,22 @@ export default function Users() {
           </tbody>
         </table>
       </div>
+      {total > 20 && (
+        <div className="pagination">
+          <button disabled={page === 1} onClick={() => setPage(page - 1)}>
+            السابق
+          </button>
+          <span>
+            {page} / {Math.ceil(total / 20)}
+          </span>
+          <button
+            disabled={page * 20 >= total}
+            onClick={() => setPage(page + 1)}
+          >
+            التالي
+          </button>
+        </div>
+      )}
       {edit && (
         <Modal title="تعديل مستخدم" onClose={() => setEdit(null)}>
           <form

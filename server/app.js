@@ -1,3 +1,4 @@
+import { securityHeaders, logEvent } from "./security.js";
 import express from "express";
 import { auth } from "./middleware/auth.js";
 import { authRoutes } from "./routes/auth.js";
@@ -5,12 +6,27 @@ import { masterRoutes } from "./routes/master.js";
 import { invoiceRoutes } from "./routes/invoices.js";
 import { userRoutes } from "./routes/users.js";
 import { auditRoutes } from "./routes/audit.js";
-export function createApp(db) {
+export function createApp(db, { production = false } = {}) {
   const app = express();
   app.disable("x-powered-by");
-  app.set("trust proxy", true);
+  app.set("trust proxy", production ? 1 : false);
+  app.locals.production = production;
   app.use((req, res, next) => {
+    req.requestId = crypto.randomUUID();
+    res.on("finish", () => {
+      if (res.statusCode >= 400)
+        logEvent(
+          req.path === "/api/auth/login"
+            ? "login_failure"
+            : res.statusCode >= 500
+              ? "api_failure"
+              : "api_rejected",
+          res.statusCode,
+          req.requestId,
+        );
+    });
     res.set({
+      ...securityHeaders,
       "Cache-Control": "no-store",
       "X-Content-Type-Options": "nosniff",
       "Referrer-Policy": "same-origin",
@@ -40,7 +56,12 @@ export function createApp(db) {
   app.use((err, req, res, next) => {
     const duplicate = err.message?.includes("UNIQUE constraint");
     let status = duplicate ? 409 : err.status || 500;
-    if (status >= 500) console.error(err);
+    if (status >= 500)
+      logEvent(
+        err.message?.includes("D1") ? "d1_failure" : "internal_error",
+        500,
+        req.requestId,
+      );
     res.status(status).json({
       error: duplicate
         ? "القيمة مسجلة مسبقاً"

@@ -1,0 +1,9 @@
+{
+  "environment": "Local Wrangler/workerd, five requests, Inspector CPU sampler; hosted clock is frozen during CPU work",
+  "noble_600k_elapsed_ms": [1340, 1331, 1250, 1230, 1331],
+  "combined_native_and_noble_active_cpu_ms_per_request": 1383.9184,
+  "hosted_native_600k": "Rejected by hosted runtime: iteration counts above 100000 are not supported",
+  "hosted_noble_paid_verification": "Passed five invocations under configured 3000ms CPU budget; native 600k remains rejected",
+  "hosted_probe_http_ms": [2425, 2261, 2051, 2048, 1894],
+  "note": "Hosted HTTP timing includes native 100k probe, rejected native 600k, Noble 600k and network overhead; not a hosted CPU measurement."
+}

@@ -1,0 +1,11 @@
+{
+  "html_status": 200,
+  "html_security_headers": true,
+  "fingerprinted_js_status": 200,
+  "immutable_asset_cache": true,
+  "unauthenticated_api_status": 401,
+  "business_api_no_store": true,
+  "spa_route_headers": true,
+  "http_status": 308,
+  "http_redirected_or_rejected": true
+}

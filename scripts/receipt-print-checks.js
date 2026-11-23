@@ -15,8 +15,16 @@ export async function verifyReceiptPrint(browser, { base, password, out }) {
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
   async function request(path, method = "GET", data) {
+    if (method === "PUT" && /^\/invoices\/\d+$/.test(path)) {
+      const current = await context.request.get(base + "/api" + path);
+      data = { ...data, version: (await current.json()).data.version };
+    }
     const response = await context.request.fetch(base + "/api" + path, {
       method,
+      headers:
+        method === "POST" && path === "/invoices"
+          ? { "Idempotency-Key": crypto.randomUUID() }
+          : {},
       data,
     });
     const result = await response.json();
@@ -67,6 +75,9 @@ export async function verifyReceiptPrint(browser, { base, password, out }) {
     assert.equal(invoice.factory_arrival, "17:20");
     assert.equal(invoice.previous, 0);
     assert.equal(invoice.cumulative, 12.75);
+    const stale = await context.newPage();
+    await stale.goto(base + "/invoices/" + invoice.id + "/edit");
+    await stale.getByLabel("ساعة الوصول إلى المصنع", { exact: true }).waitFor();
     await page.goto(base + "/invoices/" + invoice.id + "/edit");
     await page.getByLabel("ساعة الوصول إلى المصنع", { exact: true }).waitFor();
     assert.equal(
@@ -84,6 +95,15 @@ export async function verifyReceiptPrint(browser, { base, password, out }) {
     await page.waitForURL(base + "/invoices/" + invoice.id);
     const saved = (await request("/invoices/" + invoice.id)).data;
     assert.equal(saved.factory_arrival, "17:35");
+    await stale.getByLabel("اسم المستلم", { exact: true }).fill("محاولة قديمة");
+    await stale
+      .getByRole("button", { name: "حفظ الفاتورة", exact: true })
+      .click();
+    await stale
+      .getByRole("alert")
+      .filter({ hasText: "تم تعديل الفاتورة بواسطة مستخدم آخر" })
+      .waitFor();
+    await stale.close();
     await page.locator(".receipt-logo img").evaluate((image) => image.decode());
     await page.evaluate(() => document.fonts.ready);
     await page.emulateMedia({ media: "print" });
@@ -202,7 +222,16 @@ export async function verifyReceiptPrint(browser, { base, password, out }) {
   });
   const forbidden = await admin.request.put(
     base + "/api/invoices/" + normalId,
-    { data: normalBody },
+    {
+      data: {
+        ...normalBody,
+        version: (
+          await (
+            await admin.request.get(base + "/api/invoices/" + normalId)
+          ).json()
+        ).data.version,
+      },
+    },
   );
   assert.equal(
     forbidden.status(),

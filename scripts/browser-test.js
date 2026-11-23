@@ -80,10 +80,52 @@ try {
   const page = await browser.newPage({
     viewport: { width: 1440, height: 1000 },
   });
-  const errors = [];
+  const creationRequests = [];
+  page.on("request", (r) => {
+    if (r.method() === "POST" && new URL(r.url()).pathname === "/api/invoices")
+      creationRequests.push(r);
+  });
+  const errors = [],
+    policyErrors = [];
+  page.on("console", (m) => {
+    if (
+      m.type() === "error" &&
+      /Content Security Policy|Refused to|violates.*policy/i.test(m.text())
+    )
+      policyErrors.push(m.text());
+  });
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto(base + "/login");
   await page.getByRole("heading", { name: "شركة العنبر للخرسانة" }).waitFor();
+  const htmlResponse = await page.request.get(base);
+  assert.match(
+    htmlResponse.headers()["content-security-policy"],
+    /frame-ancestors 'none'/,
+  );
+  assert.equal(htmlResponse.headers()["cache-control"], "no-cache");
+  const html = await htmlResponse.text();
+  const asset = html.match(/src="(\/assets\/[^" ]+\.js)"/)[1];
+  const assetResponse = await page.request.get(base + asset);
+  assert.equal(
+    assetResponse.headers()["cache-control"],
+    "public, max-age=31536000, immutable",
+  );
+  const cacheEvidence = await page.evaluate(async (src) => {
+    performance.clearResourceTimings();
+    await (await fetch(src, { cache: "no-store" })).arrayBuffer();
+    await (await fetch(src, { cache: "reload" })).arrayBuffer();
+    await (await fetch(src)).arrayBuffer();
+    return performance.getEntriesByName(src).map((x) => ({
+      transfer_bytes: x.transferSize,
+      duration_ms: x.duration,
+    }));
+  }, base + asset);
+  assert.ok(cacheEvidence[0].transfer_bytes > 0);
+  assert.equal(cacheEvidence.at(-1).transfer_bytes, 0);
+  await writeFile(
+    "tmp/optimization/static-cache.json",
+    JSON.stringify(cacheEvidence, null, 2),
+  );
   await page.screenshot({ path: out + "/01-login.png", fullPage: true });
   await page.getByLabel("البريد الإلكتروني").fill("qa@example.com");
   await page.getByLabel("كلمة المرور", { exact: true }).fill(password);
@@ -153,11 +195,18 @@ try {
   );
   await page.getByLabel("المواد الكيميائية").fill("ملدن");
   await page.screenshot({ path: out + "/03-create.png", fullPage: true });
-  await page
-    .getByRole("button", { name: "معاينة الطباعة", exact: true })
-    .click();
+  await page.locator("form").evaluate((form) => {
+    const button = form.querySelector('button[value="preview"]');
+    form.requestSubmit(button);
+    form.requestSubmit(button);
+  });
   await page.waitForURL(/\/invoices\/\d+\/preview$/);
   await page.locator(".receipt").waitFor();
+  assert.equal(
+    creationRequests.length,
+    1,
+    "Two immediate submit events must create only one request",
+  );
   const invoiceId = page.url().match(/invoices\/(\d+)/)[1];
   const detail = await page.request.get(base + "/api/invoices/" + invoiceId);
   const savedInvoice = (await detail.json()).data;
@@ -373,6 +422,7 @@ try {
   await page.waitForURL("**/invoices");
   await verifyReceiptPrint(browser, { base, password, out });
   assert.deepEqual(errors, []);
+  assert.deepEqual(policyErrors, []);
   console.log(
     "Browser checks passed: login, all six master tabs, invoice creation, read-only preview, receipt, filters, users, role route protection, logout, mobile, print layout ADMIN print locking and invoice audit history. Screenshots: " +
       out,

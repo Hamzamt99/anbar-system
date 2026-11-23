@@ -7,7 +7,8 @@ export async function api(path, options = {}) {
   let result;
   try {
     result = await response.json();
-  } catch {
+  } catch (error) {
+    if (error.name === "AbortError") throw error;
     throw new Error("تعذر الاتصال بالخادم");
   }
   if (!response.ok) {

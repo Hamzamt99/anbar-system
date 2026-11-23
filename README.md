@@ -97,7 +97,7 @@ npx wrangler deploy --dry-run --outdir tmp/worker-build
 npm audit
 ```
 
-`npm test` uses an isolated Miniflare D1 database with the real migrations and Express routes; it does not substitute a SQLite file or mock database. Thirteen test groups cover authentication, cookies, CSRF, role permissions, master-data constraints, integer decimal quantities, customer/date resets, concurrent creation, old/new group recalculation, snapshot history, print locks, input validation, filtering, user lifecycle, logout, and session revocation.
+`npm test` uses an isolated Miniflare D1 database with the real migrations and Express routes; it does not substitute a SQLite file or mock database. Twenty-five test groups cover authentication, cookies, CSRF, role permissions, master-data constraints, integer decimal quantities, customer/date resets, concurrent creation, old/new group recalculation, snapshot history, print locks, input validation, filtering, user lifecycle, logout, and session revocation.
 
 `npm run test:browser` builds the app, applies migrations to a disposable local D1, generates a random temporary test credential, and runs Chromium against a real Wrangler Worker on port 8788. It exercises all master tabs, invoice creation and preview, user creation, list filters, role route protection, mobile width, and print styles. Screenshots of all screens go to ignored `tmp/screenshots`. Invoice filter selectors include deleted customers and drivers for historical searches; new-invoice selectors show active records only. The test removes its disposable D1 state and credentials afterward; normal local and remote data remain untouched.
 
@@ -105,7 +105,7 @@ npm audit
 
 ## Deployment status
 
-Local migration, all thirteen API test groups, the full browser workflow, the production build, and the Worker deployment dry run have passed. See [VERIFICATION.md](VERIFICATION.md) for the execution report.
+Local migration, all 25 API test groups, the full browser workflow, the production build, and the Worker deployment dry run have passed. See [VERIFICATION.md](VERIFICATION.md) for the execution report.
 
 Production D1 migrations and Worker deployment have now completed with database `04b6d257-131e-4b69-9502-fd016f55ee0d`. Application URL: https://anbar-system.anbar-system.workers.dev. Create the first production Super Admin with `npm run admin -- --remote`.
 
@@ -156,3 +156,9 @@ Every `SUPER_ADMIN` account is protected from application/API deletion, includin
 ## Mixer numbers
 
 Manage mixer numbers under **البيانات الأساسية → المكسر**. The optional searchable **رقم المكسر** selector appears beside **رقم المضخة** in invoice creation and editing, with the date on the following row below the customer, and the saved value appears on the receipt and in invoice audit snapshots. Migration `0005_mixers.sql` adds the master table and nullable invoice reference with a name snapshot, preserving older invoices and historical selections after master rename or soft deletion.
+
+## Production hardening
+
+See [optimization report](docs/optimization-report.md) for the baseline, changes, measured results and deployment record, and [operations runbook](docs/operations.md) for backups, recovery, rollback, monitoring, printer settings and support boundaries. New invoice creation requires an `Idempotency-Key` header; edits require the current integer `version`. The supplied frontend handles both. Refresh open application tabs after this coordinated release.
+
+Run `npm run lint`, `npm test`, `npm run test:browser`, `npm run test:recovery`, `npm run build:worker` and `npm audit --audit-level=high`. Recovery verification requires Python 3 and GPG. `npm run test:performance` uses synthetic local D1 only. CI uses Node 22 and no production credentials.

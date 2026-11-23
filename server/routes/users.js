@@ -13,13 +13,23 @@ import { hashPassword } from "../services/crypto.js";
 export function userRoutes(db) {
   const r = Router();
   r.use(allow("SUPER_ADMIN"));
-  r.get("/", async (req, res) =>
-    res.json({
-      data: (
-        await db.prepare("SELECT id,email,role FROM users ORDER BY id").all()
-      ).results,
-    }),
-  );
+  r.get("/", async (req, res) => {
+    const v = parse(
+      z
+        .object({ page: z.coerce.number().int().min(1).max(1000).default(1) })
+        .strict(),
+      req.query,
+    );
+    const result = await db.batch([
+      db
+        .prepare(
+          "SELECT id,email,role FROM users ORDER BY id LIMIT 20 OFFSET ?",
+        )
+        .bind((v.page - 1) * 20),
+      db.prepare("SELECT COUNT(*) AS total FROM users"),
+    ]);
+    res.json({ data: result[0].results, total: result[1].results[0].total });
+  });
   r.post("/", async (req, res) => {
     const v = parse(userInput, req.body);
     const u = await db

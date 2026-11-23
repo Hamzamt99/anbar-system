@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api, amount } from "../api";
 import { useAuth } from "../main";
@@ -7,7 +7,7 @@ export default function Invoices() {
   const { user } = useAuth(),
     navigate = useNavigate(),
     [rows, setRows] = useState([]),
-    [masters, setMasters] = useState({ customers: [], drivers: [] }),
+    [masters] = useState({ customers: [], drivers: [] }),
     [filter, setFilter] = useState({
       customer_id: "",
       driver_id: "",
@@ -21,26 +21,25 @@ export default function Invoices() {
     [error, setError] = useState(""),
     [printing, setPrinting] = useState(null);
   const canManage = user.role !== "DATA_ENTRY";
+  const cursors = useRef({ 1: null });
+  const [hasMore, setHasMore] = useState(false);
   useEffect(() => {
-    if (canManage)
-      Promise.all(
-        ["customers", "drivers"].map(async (k) => [
-          k,
-          (await api("/" + k + "?include_deleted=1")).data,
-        ]),
-      )
-        .then((x) => setMasters(Object.fromEntries(x)))
-        .catch((e) => setError(e.message));
-  }, [canManage]);
-  useEffect(() => {
+    const controller = new AbortController();
     let alive = true;
     setLoading(true);
-    const q = new URLSearchParams({ ...applied, page });
-    api("/invoices?" + q)
+    const q = new URLSearchParams({
+      ...applied,
+      page,
+      count: page === 1 ? "1" : "0",
+      ...(cursors.current[page] ? { cursor: cursors.current[page] } : {}),
+    });
+    api("/invoices?" + q, { signal: controller.signal })
       .then((r) => {
         if (alive) {
           setRows(r.data);
-          setTotal(r.total);
+          if (r.total !== undefined) setTotal(r.total);
+          cursors.current[page + 1] = r.next_cursor;
+          setHasMore(r.has_more);
           setError("");
         }
       })
@@ -48,6 +47,7 @@ export default function Invoices() {
       .finally(() => alive && setLoading(false));
     return () => {
       alive = false;
+      controller.abort();
     };
   }, [applied, page]);
   return (
@@ -62,6 +62,7 @@ export default function Invoices() {
               setError("نطاق التاريخ غير صحيح");
               return;
             }
+            cursors.current = { 1: null };
             setApplied(
               Object.fromEntries(Object.entries(filter).filter(([, v]) => v)),
             );
@@ -70,12 +71,14 @@ export default function Invoices() {
         >
           <SearchSelect
             label="اسم الشركة"
+            source="/customers?include_deleted=1"
             items={masters.customers}
             value={filter.customer_id}
             onChange={(v) => setFilter({ ...filter, customer_id: v })}
           />
           <SearchSelect
             label="السائق"
+            source="/drivers?include_deleted=1"
             items={masters.drivers}
             value={filter.driver_id}
             onChange={(v) => setFilter({ ...filter, driver_id: v })}
@@ -192,7 +195,7 @@ export default function Invoices() {
             {page} / {Math.ceil(total / 20)}
           </span>
           <button
-            disabled={page * 20 >= total || loading}
+            disabled={!hasMore || loading}
             onClick={() => setPage(page + 1)}
           >
             التالي

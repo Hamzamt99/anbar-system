@@ -1,0 +1,28 @@
+name: Verify
+on:
+  push:
+    branches: [main, optimization]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+      - run: npm run build:worker
+      - run: npm audit --audit-level=high
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:browser
+      - run: npm run test:recovery
+# No credentials, production D1 access, deployment, or merge step.
+# JavaScript project: no TypeScript type-check step is applicable.

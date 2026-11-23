@@ -12,10 +12,24 @@ async function call(
   path,
   { role = "SUPER_ADMIN", method = "GET", body, status, headers = {} } = {},
 ) {
+  if (
+    method === "PUT" &&
+    /^\/invoices\/\d+$/.test(path) &&
+    body?.version === undefined
+  ) {
+    const current = await fetch(base + "/api" + path, {
+      headers: { Cookie: cookies[role] || "" },
+    });
+    const row = await current.json();
+    body = { ...body, version: row.data?.version || 1 };
+  }
   const r = await fetch(base + "/api" + path, {
     method,
     headers: {
       "Content-Type": "application/json",
+      ...(method === "POST" && path === "/invoices"
+        ? { "Idempotency-Key": crypto.randomUUID() }
+        : {}),
       ...(cookies[role] ? { Cookie: cookies[role] } : {}),
       ...headers,
     },
@@ -174,7 +188,7 @@ test("server quantities, exact decimals, deterministic ordering and reset by dat
   assert.equal(second.cumulative, 20);
   assert.equal(third.previous, 20);
   assert.equal(third.cumulative, 30);
-  const dateReset = await call("/invoices", {
+  await call("/invoices", {
     method: "POST",
     body: invoice({ date: "2026-11-15", truck_load: ".1" }),
     status: 400,
@@ -402,7 +416,7 @@ test("mixer choices validate, retain invoice snapshots and appear in audit logs"
   assert.equal(cleared.mixer_name, "");
 });
 test("parallel invoice writes maintain correct integer totals", async () => {
-  const created = await Promise.all(
+  await Promise.all(
     Array.from({ length: 8 }, () =>
       call("/invoices", {
         method: "POST",
@@ -842,4 +856,412 @@ test("Super Admin accounts are self-managed and protected from other accounts", 
     status: 403,
   });
   await call("/users/2147483647", { method: "DELETE", body: {}, status: 404 });
+});
+
+test("idempotency serializes simultaneous submissions, replays and rejects changed payloads", async () => {
+  const headers = { "Idempotency-Key": crypto.randomUUID() },
+    body = invoice({ date: "2026-12-10" });
+  // Current driver fixture was soft-deleted in earlier regression checks: create a fresh one.
+  body.driver_id = (
+    await call("/drivers", {
+      method: "POST",
+      body: { name: "Integrity driver" },
+    })
+  ).data.id;
+  const responses = await Promise.all(
+    Array.from({ length: 6 }, () =>
+      call("/invoices", { method: "POST", body, headers }),
+    ),
+  );
+  assert.equal(new Set(responses.map((r) => r.data.id)).size, 1);
+  const row = responses[0].data;
+  const actual = await db
+    .prepare("SELECT COUNT(*) AS n FROM invoices WHERE idempotency_key=?")
+    .bind(headers["Idempotency-Key"])
+    .first();
+  assert.equal(actual.n, 1);
+  const audit = await db
+    .prepare(
+      "SELECT COUNT(*) AS n FROM audit_logs WHERE invoice_id=? AND action='CREATE'",
+    )
+    .bind(row.id)
+    .first();
+  assert.equal(audit.n, 1);
+  const replay = await call("/invoices", { method: "POST", body, headers });
+  assert.deepEqual(replay.data, row);
+  await call("/invoices", {
+    method: "POST",
+    body: { ...body, truck_load: "11" },
+    headers,
+    status: 409,
+  });
+  const separate = await call("/invoices", { method: "POST", body });
+  assert.notEqual(separate.data.id, row.id);
+  assert.equal(replay.data.idempotency_key, undefined);
+  assert.equal(replay.data.request_hash, undefined);
+  await call("/invoices/" + row.id, {
+    method: "PUT",
+    body: { ...body, receiver: "Later edited recipient" },
+  });
+  const historicalReplay = await call("/invoices", {
+    method: "POST",
+    body,
+    headers,
+  });
+  assert.deepEqual(historicalReplay.data, replay.data);
+});
+test("optimistic versions reject concurrent edits and printing invalidates stale versions", async () => {
+  const driver = (
+    await call("/drivers", { method: "POST", body: { name: "Version driver" } })
+  ).data;
+  const body = invoice({ driver_id: driver.id, date: "2026-12-11" });
+  const row = (await call("/invoices", { method: "POST", body })).data;
+  const send = (receiver) =>
+    fetch(base + "/api/invoices/" + row.id, {
+      method: "PUT",
+      headers: {
+        Cookie: cookies.SUPER_ADMIN,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ ...body, receiver, version: row.version }),
+    });
+  const results = await Promise.all([send("one"), send("two")]);
+  assert.deepEqual(results.map((r) => r.status).sort(), [200, 409]);
+  const current = (await call("/invoices/" + row.id)).data;
+  await call("/invoices/" + row.id + "/print", { method: "POST", body: {} });
+  await call("/invoices/" + row.id, {
+    method: "PUT",
+    body: { ...body, version: current.version },
+    status: 409,
+  });
+  const count = await db
+    .prepare("SELECT COUNT(*) AS n FROM invoices WHERE id=?")
+    .bind(row.id)
+    .first();
+  assert.equal(count.n, 1);
+});
+test("legacy password login upgrades without revoking valid sessions; failures do not upgrade", async () => {
+  const old = await hashPassword(secret, undefined, 100000);
+  await db
+    .prepare("INSERT INTO users(email,password_hash,role) VALUES(?,?,'ADMIN')")
+    .bind("legacy@example.com", old)
+    .run();
+  await call("/auth/login", {
+    role: "none",
+    method: "POST",
+    body: { email: "legacy@example.com", password: "incorrect" },
+    status: 401,
+  });
+  assert.equal(
+    (
+      await db
+        .prepare("SELECT password_hash FROM users WHERE email=?")
+        .bind("legacy@example.com")
+        .first()
+    ).password_hash,
+    old,
+  );
+  const login = await call("/auth/login", {
+    role: "none",
+    method: "POST",
+    body: { email: "legacy@example.com", password: secret },
+  });
+  cookies.LEGACY = login.cookie.split(";")[0];
+  assert.equal((await call("/auth/me", { role: "LEGACY" })).data.role, "ADMIN");
+  const upgraded = (
+    await db
+      .prepare("SELECT password_hash FROM users WHERE email=?")
+      .bind("legacy@example.com")
+      .first()
+  ).password_hash;
+  assert.match(upgraded, /^pbkdf2\$600000\$/);
+  assert.equal(await verifyPassword(secret, upgraded), true);
+  assert.equal(await verifyPassword(secret, "pbkdf2$999999999$bad$bad"), false);
+});
+test("security headers and cache policy cover API, HTML, static assets and HTTPS", async () => {
+  const { protectResponse } = await import("../server/security.js");
+  const response = await fetch(base + "/api/auth/me");
+  assert.equal(response.status, 401);
+  for (const name of [
+    "content-security-policy",
+    "permissions-policy",
+    "x-content-type-options",
+    "referrer-policy",
+  ])
+    assert.ok(response.headers.get(name));
+  assert.equal(response.headers.get("cache-control"), "no-store");
+  for (const path of [
+    "/",
+    "/invoices/1",
+    "/assets/index-abcdefgh.js",
+    "/api/invoices",
+  ]) {
+    const r = protectResponse(
+      new Response("test"),
+      new Request("https://example.test" + path),
+    );
+    assert.match(
+      r.headers.get("content-security-policy"),
+      /frame-ancestors 'none'/,
+    );
+    assert.match(r.headers.get("strict-transport-security"), /31536000/);
+    assert.equal(
+      r.headers.get("cache-control"),
+      path.startsWith("/api/")
+        ? "no-store"
+        : path.startsWith("/assets/")
+          ? "public, max-age=31536000, immutable"
+          : "no-cache",
+    );
+  }
+});
+test("cursor pages have no repeated rows, skip repeat counts and bound selectors", async () => {
+  const first = await call("/invoices");
+  assert.ok(first.data.length <= 20);
+  assert.ok(first.next_cursor);
+  const next = await call(
+    "/invoices?count=0&page=2&cursor=" + first.next_cursor,
+  );
+  assert.equal(next.total, undefined);
+  assert.equal(
+    next.data.some((x) => first.data.some((y) => y.id === x.id)),
+    false,
+  );
+  await call("/invoices?cursor=invalid", { status: 400 });
+  await call("/invoices?page=101", { status: 400 });
+  const masters = await call("/customers?limit=1");
+  assert.equal(masters.data.length, 1);
+  const more = await call("/customers?limit=1&cursor=" + masters.next_cursor);
+  assert.notEqual(more.data[0]?.id, masters.data[0].id);
+  await call("/customers?limit=101", { status: 400 });
+  await call("/customers?include_deleted=1", {
+    role: "DATA_ENTRY",
+    status: 403,
+  });
+  await call("/invoices?customer_id=1", { role: "DATA_ENTRY", status: 403 });
+});
+test("literal HTML-like input stays ordinary text and mass assignment is rejected", async () => {
+  const name = "<img src=x onerror=alert(1)> & شركة";
+  const row = (await call("/customers", { method: "POST", body: { name } }))
+    .data;
+  assert.equal(row.name, name);
+  await call("/customers", {
+    method: "POST",
+    body: { name: "bad", role: "SUPER_ADMIN" },
+    status: 400,
+  });
+  await call("/invoices", {
+    method: "POST",
+    body: { ...invoice(), previous: 999 },
+    status: 400,
+  });
+  assert.deepEqual(
+    (await db.prepare("PRAGMA foreign_key_check").all()).results,
+    [],
+  );
+});
+test("login limiter ignores spoofed forwarding headers locally and returns generic errors", async () => {
+  for (let n = 0; n < 11; n++)
+    await call("/auth/login", {
+      role: "none",
+      method: "POST",
+      body: { email: "nonexistent-limiter@example.com", password: "incorrect" },
+      headers: {
+        "CF-Connecting-IP": "203.0.113." + n,
+        "X-Forwarded-For": "198.51.100." + n,
+      },
+      status: n < 10 ? 401 : 429,
+    });
+});
+
+test("all restricted route families reject unauthenticated and unauthorized roles", async () => {
+  for (const path of [
+    "/users",
+    "/audit-logs",
+    "/invoices",
+    "/invoices/1",
+    "/invoices/quantity?customer_id=1&date=2026-01-01",
+    "/customers",
+    "/drivers",
+    "/mix-types",
+    "/vehicles",
+    "/pumps",
+    "/mixers",
+  ])
+    await call(path, { role: "none", status: 401 });
+  for (const master of [
+    "customers",
+    "drivers",
+    "mix-types",
+    "vehicles",
+    "pumps",
+    "mixers",
+  ])
+    for (const method of ["POST", "PUT", "DELETE"])
+      await call("/" + master + (method === "POST" ? "" : "/1"), {
+        role: "DATA_ENTRY",
+        method,
+        body: { name: "denied" },
+        status: 403,
+      });
+  for (const role of ["DATA_ENTRY", "ADMIN"]) {
+    await call("/users", { role, status: 403 });
+    await call("/audit-logs", { role, status: 403 });
+    await call("/users", { role, method: "POST", body: {}, status: 403 });
+    await call("/users/1", { role, method: "PUT", body: {}, status: 403 });
+    await call("/users/1/password", {
+      role,
+      method: "POST",
+      body: {},
+      status: 403,
+    });
+    await call("/users/1", { role, method: "DELETE", body: {}, status: 403 });
+  }
+  await call("/invoices/1", {
+    role: "DATA_ENTRY",
+    method: "PUT",
+    body: {},
+    status: 403,
+  });
+  await call("/invoices/1/print", {
+    role: "DATA_ENTRY",
+    method: "POST",
+    body: {},
+    status: 403,
+  });
+});
+
+test("PBKDF2 implementation matches native reference vectors for both supported costs", async () => {
+  const { pbkdf2Sync } = await import("node:crypto");
+  const salt = "1234567890abcdef1234567890abcdef";
+  for (const iterations of [100000, 600000]) {
+    const actual = await hashPassword("reference-password", salt, iterations);
+    const expected = pbkdf2Sync(
+      "reference-password",
+      Buffer.from(salt, "hex"),
+      iterations,
+      32,
+      "sha256",
+    ).toString("hex");
+    assert.equal(actual.split("$")[3], expected);
+  }
+});
+
+test("delta quantity triggers match a reference model for out-of-order inserts and group moves", async () => {
+  const customerIds = [];
+  for (let i = 0; i < 2; i++)
+    customerIds.push(
+      (
+        await call("/customers", {
+          method: "POST",
+          body: { name: "Quantity model " + i },
+        })
+      ).data.id,
+    );
+  const driver = (
+    await call("/drivers", {
+      method: "POST",
+      body: { name: "Quantity model driver" },
+    })
+  ).data.id;
+  let seed = 451;
+  const random = (n) => {
+    seed = (seed * 1664525 + 1013904223) >>> 0;
+    return seed % n;
+  };
+  const model = [];
+  const verify = async () => {
+    const rows = (
+      await db
+        .prepare(
+          "SELECT id,customer_id,date,truck_load,created_at,previous,cumulative FROM invoices WHERE customer_id IN (?,?) ORDER BY customer_id,date,created_at,id",
+        )
+        .bind(...customerIds)
+        .all()
+    ).results;
+    const totals = new Map();
+    for (const row of rows) {
+      const expected = model.find((x) => x.id === row.id);
+      assert.equal(row.truck_load, expected.truck_load);
+      const key = row.customer_id + ":" + row.date;
+      const previous = totals.get(key) || 0;
+      assert.equal(row.previous, previous);
+      assert.equal(row.cumulative, previous + row.truck_load);
+      totals.set(key, row.cumulative);
+    }
+  };
+  for (let i = 0; i < 24; i++) {
+    const value = {
+      customer_id: customerIds[random(2)],
+      date: "2027-01-0" + (1 + random(3)),
+      truck_load: random(2001),
+      created_at:
+        "2026-01-01T10:" + String(random(60)).padStart(2, "0") + ":00.000Z",
+    };
+    const r = await db
+      .prepare(
+        "INSERT INTO invoices(customer_id,driver_id,mix_type_id,vehicle_id,pump_id,customer_name,driver_name,mix_type_name,vehicle_name,pump_name,date,pour_location,requested,truck_load,departure,arrival,finish,receiver,created_at) VALUES(?,?,?,?,?,'Model','Model','Model','Model','Model',?,'Model',100000,?,'10:00','','','',?)",
+      )
+      .bind(
+        value.customer_id,
+        driver,
+        refs.mix_type_id,
+        refs.vehicle_id,
+        refs.pump_id,
+        value.date,
+        value.truck_load,
+        value.created_at,
+      )
+      .run();
+    model.push({ ...value, id: r.meta.last_row_id });
+    await verify();
+  }
+  for (let i = 0; i < 40; i++) {
+    const value = model[random(model.length)];
+    Object.assign(value, {
+      customer_id: customerIds[random(2)],
+      date: "2027-01-0" + (1 + random(3)),
+      truck_load: random(2001),
+    });
+    await db
+      .prepare(
+        "UPDATE invoices SET customer_id=?,date=?,truck_load=? WHERE id=?",
+      )
+      .bind(value.customer_id, value.date, value.truck_load, value.id)
+      .run();
+    await verify();
+  }
+});
+
+test("internal error logging contains no exception detail, SQL, body, cookie or token", async () => {
+  const marker = "SYNTHETIC_PRIVATE_MARKER",
+    logs = [],
+    original = console.log;
+  const isolated = createApp({
+    prepare() {
+      throw new Error("D1_ERROR SQL " + marker);
+    },
+  }).listen(0, "127.0.0.1");
+  await new Promise((r) => isolated.once("listening", r));
+  console.log = (...args) => logs.push(args.join(" "));
+  try {
+    const r = await fetch(
+      "http://127.0.0.1:" + isolated.address().port + "/api/invoices",
+      { headers: { Cookie: "anbar_session=" + marker } },
+    );
+    assert.equal(r.status, 500);
+    assert.equal((await r.text()).includes(marker), false);
+    await new Promise((r) => setImmediate(r));
+    assert.ok(logs.length);
+    assert.equal(logs.join(" ").includes(marker), false);
+    for (const line of logs)
+      assert.deepEqual(Object.keys(JSON.parse(line)).sort(), [
+        "event",
+        "request_id",
+        "status",
+      ]);
+  } finally {
+    console.log = original;
+    await new Promise((r) => isolated.close(r));
+  }
 });

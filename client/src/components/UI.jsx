@@ -1,4 +1,11 @@
-import React, { useId, useLayoutEffect, useRef, useState } from "react";
+import { api } from "../api";
+import React, {
+  useId,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 export function Field({ label, required, children, ...props }) {
   const id = useId();
   return (
@@ -100,7 +107,8 @@ export function Confirm({ message, onConfirm, onClose }) {
 }
 export function SearchSelect({
   label,
-  items,
+  items = [],
+  source,
   value,
   onChange,
   required,
@@ -112,9 +120,65 @@ export function SearchSelect({
   const [query, setQuery] = useState(""),
     [open, setOpen] = useState(false),
     [active, setActive] = useState(0);
-  const selected = items.find((x) => String(x.id) === String(value));
-  const options = items.filter((x) => x.name.includes(query));
+  const [remote, setRemote] = useState([]),
+    [next, setNext] = useState(null),
+    [loading, setLoading] = useState(false),
+    [error, setError] = useState("");
+  const remembered = useRef(null),
+    generation = useRef(0);
+  useEffect(() => {
+    if (!source || !open) return;
+    const controller = new AbortController();
+    const current = ++generation.current;
+    setLoading(true);
+    setError("");
+    const timer = setTimeout(() => {
+      api(
+        source +
+          (source.includes("?") ? "&" : "?") +
+          new URLSearchParams({ search: query, limit: 50 }),
+        { signal: controller.signal },
+      )
+        .then((r) => {
+          if (controller.signal.aborted || current !== generation.current)
+            return;
+          setRemote(r.data);
+          setNext(r.has_more ? r.next_cursor : null);
+        })
+        .catch((e) => {
+          if (
+            !controller.signal.aborted &&
+            current === generation.current &&
+            e.name !== "AbortError"
+          )
+            setError(e.message);
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) setLoading(false);
+        });
+    }, 200);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+      generation.current++;
+    };
+  }, [source, open, query]);
+  const choices = source
+    ? [
+        ...remote,
+        ...items.filter(
+          (x) => !remote.some((y) => String(y.id) === String(x.id)),
+        ),
+      ]
+    : items;
+  const selected =
+    choices.find((x) => String(x.id) === String(value)) ||
+    (String(remembered.current?.id) === String(value)
+      ? remembered.current
+      : null);
+  const options = source ? remote : items.filter((x) => x.name.includes(query));
   const choose = (x) => {
+    remembered.current = x;
     onChange(String(x.id));
     setQuery("");
     setOpen(false);
@@ -152,6 +216,8 @@ export function SearchSelect({
           }}
           onBlur={() => setTimeout(() => setOpen(false), 120)}
           onChange={(e) => {
+            setRemote([]);
+            setNext(null);
             setQuery(e.target.value);
             setActive(0);
             setOpen(true);
@@ -215,7 +281,42 @@ export function SearchSelect({
                 {x.name}
               </li>
             ))}
-            {!options.length && <li>لا توجد نتائج</li>}
+            {loading && <li>جارٍ التحميل...</li>}
+            {error && <li role="alert">{error}</li>}
+            {!loading && !error && !options.length && <li>لا توجد نتائج</li>}
+            {next && (
+              <li>
+                <button
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  disabled={loading}
+                  onClick={async () => {
+                    const current = generation.current;
+                    try {
+                      setLoading(true);
+                      const r = await api(
+                        source +
+                          (source.includes("?") ? "&" : "?") +
+                          new URLSearchParams({
+                            search: query,
+                            limit: 50,
+                            cursor: next,
+                          }),
+                      );
+                      if (current !== generation.current) return;
+                      setRemote((old) => [...old, ...r.data]);
+                      setNext(r.has_more ? r.next_cursor : null);
+                    } catch (e) {
+                      if (current === generation.current) setError(e.message);
+                    } finally {
+                      if (current === generation.current) setLoading(false);
+                    }
+                  }}
+                >
+                  المزيد
+                </button>
+              </li>
+            )}
           </ul>
         )}
       </div>

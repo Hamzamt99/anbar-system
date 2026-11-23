@@ -12,11 +12,17 @@
     "admin": "node scripts/create-admin.js",
     "test": "node --test tests/*.test.js",
     "test:browser": "npm run build && node scripts/browser-test.js",
-    "format": "prettier --write client/src server shared scripts tests vite.config.js wrangler.jsonc package.json"
+    "format": "prettier --write client/src server shared scripts tests vite.config.js wrangler.jsonc package.json",
+    "lint": "eslint . && prettier --check client/src server shared scripts tests eslint.config.js vite.config.js wrangler.jsonc package.json",
+    "build:worker": "wrangler deploy --dry-run --outdir tmp/worker-build",
+    "test:recovery": "node scripts/recovery-test.js",
+    "backup": "node scripts/backup.js",
+    "test:performance": "node scripts/performance-checks.js"
   },
   "dependencies": {
     "@fontsource/amiri": "^5.2.0",
     "@fontsource/noto-sans-arabic": "^5.2.0",
+    "@noble/hashes": "^2.0.1",
     "express": "^5.1.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
@@ -24,8 +30,12 @@
     "zod": "^4.1.0"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.5",
     "@playwright/test": "^1.56.0",
     "@vitejs/plugin-react": "^5.0.0",
+    "eslint": "^9.39.5",
+    "eslint-plugin-react": "^7.37.5",
+    "globals": "^17.14.0",
     "miniflare": "^5.20261113.0-beta",
     "prettier": "^3.10.1",
     "vite": "^7.1.0",
