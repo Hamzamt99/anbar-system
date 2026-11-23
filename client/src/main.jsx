@@ -1,3 +1,4 @@
+import { MasterCacheProvider } from "./components/MasterCache";
 import React, {
   createContext,
   useContext,
@@ -167,7 +168,9 @@ function Layout() {
       </header>
       <main>
         <ErrorBox error={error} />
-        <Outlet />
+        <MasterCacheProvider identity={`${user.id}:${user.role}`}>
+          <Outlet />
+        </MasterCacheProvider>
       </main>
     </div>
   );

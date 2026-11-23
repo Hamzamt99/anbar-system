@@ -60,16 +60,7 @@ export async function checkActionResponsiveness(browser, { base, password }) {
     });
     for (const [path, tab, label, singular, name] of masters) {
       await measure(path + ":tab", async () => {
-        const loaded = page.waitForResponse(
-          (r) => new URL(r.url()).pathname === "/api/" + path,
-        );
         await button(tab).click();
-        // The first tab may already be selected; exercise another tab first in that case.
-        if (path === "customers") {
-          await button("السائقون").click();
-          await button(tab).click();
-        }
-        await loaded;
         await page.locator(".empty").waitFor({ state: "hidden" });
       });
       await measure(path + ":open_add_modal", async () => {

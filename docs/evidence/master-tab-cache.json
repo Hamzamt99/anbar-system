@@ -1,0 +1,83 @@
+{
+  "initial_reads": 6,
+  "warm_switches": 18,
+  "warm_switch_reads": 0,
+  "survives_route_return": true,
+  "cross_tab_mutation_invalidates": true,
+  "same_tab_mutation_invalidates": true,
+  "refresh_reloads": true,
+  "timings": [
+    {
+      "path": "customers",
+      "elapsed_ms": 31.1
+    },
+    {
+      "path": "drivers",
+      "elapsed_ms": 33.2
+    },
+    {
+      "path": "mix-types",
+      "elapsed_ms": 33.8
+    },
+    {
+      "path": "vehicles",
+      "elapsed_ms": 34.4
+    },
+    {
+      "path": "pumps",
+      "elapsed_ms": 31.7
+    },
+    {
+      "path": "mixers",
+      "elapsed_ms": 36.3
+    },
+    {
+      "path": "customers",
+      "elapsed_ms": 29.4
+    },
+    {
+      "path": "drivers",
+      "elapsed_ms": 33.6
+    },
+    {
+      "path": "mix-types",
+      "elapsed_ms": 32.1
+    },
+    {
+      "path": "vehicles",
+      "elapsed_ms": 34.7
+    },
+    {
+      "path": "pumps",
+      "elapsed_ms": 33
+    },
+    {
+      "path": "mixers",
+      "elapsed_ms": 32.8
+    },
+    {
+      "path": "customers",
+      "elapsed_ms": 35.9
+    },
+    {
+      "path": "drivers",
+      "elapsed_ms": 32.8
+    },
+    {
+      "path": "mix-types",
+      "elapsed_ms": 31.6
+    },
+    {
+      "path": "vehicles",
+      "elapsed_ms": 32.9
+    },
+    {
+      "path": "pumps",
+      "elapsed_ms": 35
+    },
+    {
+      "path": "mixers",
+      "elapsed_ms": 32.9
+    }
+  ]
+}

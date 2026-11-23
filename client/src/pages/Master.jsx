@@ -1,4 +1,10 @@
-import React, { useEffect, useState, useRef } from "react";
+import { useMasterCache } from "../components/MasterCache";
+import React, {
+  useEffect,
+  useState,
+  useRef,
+  useSyncExternalStore,
+} from "react";
 import { api, masterTypes } from "../api";
 import {
   Title,
@@ -11,63 +17,41 @@ import {
 export default function Master() {
   const [tab, setTab] = useState("customers"),
     [search, setSearch] = useState(""),
-    [rows, setRows] = useState([]),
-    [loading, setLoading] = useState(true),
-    [error, setError] = useState(""),
     [edit, setEdit] = useState(null),
     [remove, setRemove] = useState(null),
     [busy, setBusy] = useState(false),
     [formError, setFormError] = useState("");
-  const [page, setPage] = useState(1),
-    [hasMore, setHasMore] = useState(false);
+  const [page, setPage] = useState(1);
   const cursors = useRef({ 1: null });
-  const queryString = () =>
-    new URLSearchParams({
-      search,
-      limit: 50,
-      ...(cursors.current[page] ? { cursor: cursors.current[page] } : {}),
-    });
-  const accept = (r) => {
-    setRows(r.data);
-    setHasMore(r.has_more);
-    cursors.current[page + 1] = r.next_cursor;
-  };
+  const cache = useMasterCache();
+  const revision = useSyncExternalStore(cache.subscribe, cache.snapshot);
+  const cursor = cursors.current[page] || null;
+  const result = cache.read(tab, search, cursor);
+  const rows = result?.data || [];
+  const loading = !result || result.status === "loading";
+  const error = result?.error || "";
+  const hasMore = result?.has_more || false;
+  if (result?.status === "ready")
+    cursors.current[page + 1] = result.next_cursor;
   const type = masterTypes.find((x) => x[0] === tab);
   async function load() {
-    setLoading(true);
-    try {
-      accept(await api(`/${tab}?` + queryString()));
-      setError("");
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setLoading(false);
-    }
+    cursors.current = { 1: null };
+    setPage(1);
+    await cache.fetch(tab, search);
   }
   useEffect(() => {
-    const controller = new AbortController();
-    let alive = true;
-    setLoading(true);
-    const timer = setTimeout(
-      () => {
-        api(`/${tab}?` + queryString(), { signal: controller.signal })
-          .then((r) => {
-            if (alive) {
-              accept(r);
-              setError("");
-            }
-          })
-          .catch((e) => alive && setError(e.message))
-          .finally(() => alive && setLoading(false));
-      },
-      search ? 180 : 0,
-    );
-    return () => {
-      alive = false;
-      clearTimeout(timer);
-      controller.abort();
-    };
-  }, [tab, search, page]);
+    // Warm the six bounded first pages once per authenticated page lifetime.
+    for (const [path] of masterTypes) void cache.fetch(path);
+  }, [cache]);
+  useEffect(() => {
+    if (result) return;
+    if (!search) {
+      void cache.fetch(tab, search, cursor);
+      return;
+    }
+    const timer = setTimeout(() => void cache.fetch(tab, search, cursor), 180);
+    return () => clearTimeout(timer);
+  }, [cache, tab, search, cursor, revision]);
   return (
     <>
       <Title subtitle="إدارة البيانات المستخدمة في الفواتير">
@@ -112,6 +96,16 @@ export default function Master() {
         </button>
       </div>
       <ErrorBox error={error} />
+      {error && (
+        <button
+          onClick={() => {
+            cache.invalidate(tab);
+            void cache.fetch(tab, search, cursor);
+          }}
+        >
+          إعادة المحاولة
+        </button>
+      )}
       <div className="table-wrap">
         <table role="table" className="responsive-table">
           <thead>

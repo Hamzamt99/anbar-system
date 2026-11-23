@@ -48,3 +48,9 @@ Remaining scaling limits: exact first-page counts, arbitrary contains searches a
 Lint, all 25 API groups, full browser suite, Chromium/WebKit mobile checks, Worker dry run, dependency audit (zero vulnerabilities) and encrypted export/restore plus migration reversal/reapply checks passed. Normal and long Arabic receipt PDFs passed the existing page-box verifier (220 × 190 mm, one page, content unchanged), and rendered pages were visually inspected without clipping. Native Chromium's rounded page boxes are recorded separately by the verifier; print CSS is unchanged.
 
 Evidence: [UI action/request samples](evidence/action-responsiveness.json), [scale benchmark and plans](evidence/action-scale-benchmark.json). Production rollout and rollback version are recorded in the operations runbook.
+
+## Follow-up: master-tab request reuse
+
+The original timings above included network reads on master tab switches. The follow-up now caches master table pages in an account/role-scoped in-memory provider that survives route changes. Tab switches do not revalidate. First pages prefetch once, search/cursor cache entries are bounded, and successful master writes invalidate the affected type in the same browser and other open tabs through metadata-only BroadcastChannel messages. Full reload/logout/account changes discard the cache. External-browser/direct database changes require a refresh.
+
+The focused test warmed all six pages with six requests, then blocked master reads and switched tabs 18 times plus left/returned to the page: zero further requests, with 29–36 ms local switches. Same-tab/cross-tab mutation invalidation and reload passed. The latest full action scenario made 109 completed API requests; the original sample table/evidence above is retained as the earlier review. [Cache regression evidence](evidence/master-tab-cache.json).
