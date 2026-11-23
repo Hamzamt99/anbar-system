@@ -20,6 +20,47 @@ async function checkWidth(page, label) {
   );
 }
 
+export async function checkFieldBounds(page, label) {
+  const issues = await page
+    .locator("main .field input, main .field select")
+    .evaluateAll((elements) =>
+      elements.flatMap((input) => {
+        if (!input.getClientRects().length) return [];
+        const field = input.closest(".field"),
+          box = input.getBoundingClientRect(),
+          parent = field.getBoundingClientRect();
+        const container = input.closest(".section-fields, .filter"),
+          c = container?.getBoundingClientRect(),
+          style = container ? getComputedStyle(container) : null;
+        const left = c ? c.left + parseFloat(style.paddingLeft) : parent.left;
+        const right = c
+          ? c.right - parseFloat(style.paddingRight)
+          : parent.right;
+        return box.left < parent.left - 1 ||
+          box.right > parent.right + 1 ||
+          box.left < left - 1 ||
+          box.right > right + 1
+          ? [
+              {
+                field: input.getAttribute("aria-label"),
+                left: box.left,
+                right: box.right,
+                parentLeft: parent.left,
+                parentRight: parent.right,
+                contentLeft: left,
+                contentRight: right,
+              },
+            ]
+          : [];
+      }),
+    );
+  assert.deepEqual(
+    issues,
+    [],
+    label + ": fields extend beyond their containers",
+  );
+}
+
 export async function checkMobilePages(page, { base, out, invoiceId }) {
   const routes = [
     ["create", "/invoices/new", "إنشاء فاتورة"],
@@ -45,6 +86,7 @@ export async function checkMobilePages(page, { base, out, invoiceId }) {
       if (name === "create") await page.getByLabel("مكان الصب").waitFor();
       await page.evaluate(() => document.fonts.ready);
       await checkWidth(page, `${width}px ${name}`);
+      await checkFieldBounds(page, `${width}px ${name}`);
       if (width <= 900) {
         const overflowing = await page
           .locator(".responsive-table")

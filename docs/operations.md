@@ -19,7 +19,7 @@ Before any migration/deployment:
 
 ## Release verified on 2026-11-23
 
-Workers Paid is active. Hardening release: `76085b30-c9d0-4c3e-a46e-82ac8cd8284b`. Latest branding-only deployment: `afd4c895-c1e1-4c6b-a934-a36ae5ff6a98`; immediate branding rollback: `76085b30-c9d0-4c3e-a46e-82ac8cd8284b` (same schema). Compatible rollback version: `9f97a91a-0f7d-4580-9f87-173adf85f634`. Original data was verified unchanged after migrations; physical printer acceptance was confirmed by the client. Configure the remaining notification/key/offsite/scheduler items below. Hosted staging smoke tests are reproducible with `node scripts/staging-smoke.js <isolated-config> <staging-url>`; it refuses the production database/name and requires an empty staging user table.
+Workers Paid is active. Hardening release: `76085b30-c9d0-4c3e-a46e-82ac8cd8284b`. Latest deployment: `e768c4bb-5850-4b57-b05c-742e321e6adc` (mobile native-field containment); immediate rollback: `afd4c895-c1e1-4c6b-a934-a36ae5ff6a98` (same schema). Compatible rollback version: `9f97a91a-0f7d-4580-9f87-173adf85f634`. Original data was verified unchanged after migrations; physical printer acceptance was confirmed by the client. Configure the remaining notification/key/offsite/scheduler items below. Hosted staging smoke tests are reproducible with `node scripts/staging-smoke.js <isolated-config> <staging-url>`; it refuses the production database/name and requires an empty staging user table.
 
 ## Rollback
 

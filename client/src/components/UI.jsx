@@ -9,7 +9,15 @@ import React, {
 export function Field({ label, required, children, ...props }) {
   const id = useId();
   return (
-    <label className="field" htmlFor={id}>
+    <label
+      className={[
+        "field",
+        ["date", "time"].includes(props.type) && "native-datetime-field",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+      htmlFor={id}
+    >
       <span>
         {label}
         {required && (

@@ -21,7 +21,7 @@ jobs:
       - run: npm run build
       - run: npm run build:worker
       - run: npm audit --audit-level=high
-      - run: npx playwright install --with-deps chromium
+      - run: npx playwright install --with-deps chromium webkit
       - run: npm run test:browser
       - run: npm run test:recovery
 # No credentials, production D1 access, deployment, or merge step.

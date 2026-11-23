@@ -1,3 +1,4 @@
+import { checkWebKitMobile } from "./webkit-mobile-checks.js";
 import { spawn, spawnSync } from "node:child_process";
 import { mkdir, writeFile, rm } from "node:fs/promises";
 import assert from "node:assert/strict";
@@ -339,6 +340,7 @@ try {
     1,
   );
   await checkMobilePages(page, { base, out, invoiceId });
+  await checkWebKitMobile({ base, password, out });
   await page.setViewportSize({ width: 390, height: 844 });
   await openNavigation(page);
   await page.getByRole("link", { name: "إنشاء فاتورة", exact: true }).click();

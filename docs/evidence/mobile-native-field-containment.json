@@ -1,0 +1,290 @@
+[
+  {
+    "engine": "WebKit",
+    "width": 320,
+    "page": "create",
+    "state": "empty",
+    "native_controls": 5,
+    "contained": true
+  },
+  {
+    "engine": "WebKit",
+    "width": 320,
+    "page": "create",
+    "state": "filled",
+    "native_controls": 5,
+    "contained": true
+  },
+  {
+    "engine": "WebKit",
+    "width": 320,
+    "page": "filters",
+    "state": "empty",
+    "native_controls": 2,
+    "contained": true
+  },
+  {
+    "engine": "WebKit",
+    "width": 320,
+    "page": "filters",
+    "state": "filled",
+    "native_controls": 2,
+    "contained": true
+  },
+  {
+    "engine": "WebKit",
+    "width": 320,
+    "page": "audit-filters",
+    "state": "empty",
+    "native_controls": 2,
+    "contained": true
+  },
+  {
+    "engine": "WebKit",
+    "width": 320,
+    "page": "audit-filters",
+    "state": "filled",
+    "native_controls": 2,
+    "contained": true
+  },
+  {
+    "engine": "WebKit",
+    "width": 375,
+    "page": "create",
+    "state": "empty",
+    "native_controls": 5,
+    "contained": true
+  },
+  {
+    "engine": "WebKit",
+    "width": 375,
+    "page": "create",
+    "state": "filled",
+    "native_controls": 5,
+    "contained": true
+  },
+  {
+    "engine": "WebKit",
+    "width": 375,
+    "page": "filters",
+    "state": "empty",
+    "native_controls": 2,
+    "contained": true
+  },
+  {
+    "engine": "WebKit",
+    "width": 375,
+    "page": "filters",
+    "state": "filled",
+    "native_controls": 2,
+    "contained": true
+  },
+  {
+    "engine": "WebKit",
+    "width": 375,
+    "page": "audit-filters",
+    "state": "empty",
+    "native_controls": 2,
+    "contained": true
+  },
+  {
+    "engine": "WebKit",
+    "width": 375,
+    "page": "audit-filters",
+    "state": "filled",
+    "native_controls": 2,
+    "contained": true
+  },
+  {
+    "engine": "WebKit",
+    "width": 390,
+    "page": "create",
+    "state": "empty",
+    "native_controls": 5,
+    "contained": true
+  },
+  {
+    "engine": "WebKit",
+    "width": 390,
+    "page": "create",
+    "state": "filled",
+    "native_controls": 5,
+    "contained": true
+  },
+  {
+    "engine": "WebKit",
+    "width": 390,
+    "page": "filters",
+    "state": "empty",
+    "native_controls": 2,
+    "contained": true
+  },
+  {
+    "engine": "WebKit",
+    "width": 390,
+    "page": "filters",
+    "state": "filled",
+    "native_controls": 2,
+    "contained": true
+  },
+  {
+    "engine": "WebKit",
+    "width": 390,
+    "page": "audit-filters",
+    "state": "empty",
+    "native_controls": 2,
+    "contained": true
+  },
+  {
+    "engine": "WebKit",
+    "width": 390,
+    "page": "audit-filters",
+    "state": "filled",
+    "native_controls": 2,
+    "contained": true
+  },
+  {
+    "engine": "WebKit",
+    "width": 402,
+    "page": "create",
+    "state": "empty",
+    "native_controls": 5,
+    "contained": true
+  },
+  {
+    "engine": "WebKit",
+    "width": 402,
+    "page": "create",
+    "state": "filled",
+    "native_controls": 5,
+    "contained": true
+  },
+  {
+    "engine": "WebKit",
+    "width": 402,
+    "page": "filters",
+    "state": "empty",
+    "native_controls": 2,
+    "contained": true
+  },
+  {
+    "engine": "WebKit",
+    "width": 402,
+    "page": "filters",
+    "state": "filled",
+    "native_controls": 2,
+    "contained": true
+  },
+  {
+    "engine": "WebKit",
+    "width": 402,
+    "page": "audit-filters",
+    "state": "empty",
+    "native_controls": 2,
+    "contained": true
+  },
+  {
+    "engine": "WebKit",
+    "width": 402,
+    "page": "audit-filters",
+    "state": "filled",
+    "native_controls": 2,
+    "contained": true
+  },
+  {
+    "engine": "WebKit",
+    "width": 430,
+    "page": "create",
+    "state": "empty",
+    "native_controls": 5,
+    "contained": true
+  },
+  {
+    "engine": "WebKit",
+    "width": 430,
+    "page": "create",
+    "state": "filled",
+    "native_controls": 5,
+    "contained": true
+  },
+  {
+    "engine": "WebKit",
+    "width": 430,
+    "page": "filters",
+    "state": "empty",
+    "native_controls": 2,
+    "contained": true
+  },
+  {
+    "engine": "WebKit",
+    "width": 430,
+    "page": "filters",
+    "state": "filled",
+    "native_controls": 2,
+    "contained": true
+  },
+  {
+    "engine": "WebKit",
+    "width": 430,
+    "page": "audit-filters",
+    "state": "empty",
+    "native_controls": 2,
+    "contained": true
+  },
+  {
+    "engine": "WebKit",
+    "width": 430,
+    "page": "audit-filters",
+    "state": "filled",
+    "native_controls": 2,
+    "contained": true
+  },
+  {
+    "engine": "WebKit",
+    "width": 768,
+    "page": "create",
+    "state": "empty",
+    "native_controls": 5,
+    "contained": true
+  },
+  {
+    "engine": "WebKit",
+    "width": 768,
+    "page": "create",
+    "state": "filled",
+    "native_controls": 5,
+    "contained": true
+  },
+  {
+    "engine": "WebKit",
+    "width": 768,
+    "page": "filters",
+    "state": "empty",
+    "native_controls": 2,
+    "contained": true
+  },
+  {
+    "engine": "WebKit",
+    "width": 768,
+    "page": "filters",
+    "state": "filled",
+    "native_controls": 2,
+    "contained": true
+  },
+  {
+    "engine": "WebKit",
+    "width": 768,
+    "page": "audit-filters",
+    "state": "empty",
+    "native_controls": 2,
+    "contained": true
+  },
+  {
+    "engine": "WebKit",
+    "width": 768,
+    "page": "audit-filters",
+    "state": "filled",
+    "native_controls": 2,
+    "contained": true
+  }
+]

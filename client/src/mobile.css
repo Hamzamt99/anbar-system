@@ -588,3 +588,35 @@
     overflow-wrap: anywhere;
   }
 }
+
+/* iOS native date/time controls must size to the field, not their intrinsic UI.
+   A grid also avoids Safari's RTL flex-item sizing with an LTR native control. */
+@media screen and (max-width: 1000px) {
+  .native-datetime-field {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    min-inline-size: 0;
+  }
+  .native-datetime-field > input[type="date"],
+  .native-datetime-field > input[type="time"] {
+    -webkit-appearance: none;
+    appearance: none;
+    box-sizing: border-box;
+    display: block;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    inline-size: 100%;
+    min-inline-size: 0;
+    max-inline-size: 100%;
+    margin: 0;
+  }
+  .native-datetime-field > input::-webkit-date-and-time-value {
+    min-height: 1.5em;
+    text-align: right;
+  }
+  .native-datetime-field > input::-webkit-datetime-edit {
+    min-width: 0;
+    padding: 0;
+  }
+}

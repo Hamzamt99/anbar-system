@@ -166,3 +166,5 @@ Run `npm run lint`, `npm test`, `npm run test:browser`, `npm run test:recovery`,
 ## Company logo
 
 Header, login and receipt use the supplied transparent triangular PNG with its built-in company name. There is no additional visible company-name caption next to the healthy logo. Full artwork and aspect ratio are preserved; image alt text supplies accessible names. Receipt text fallback appears only if the image fails.
+
+Mobile browser verification includes WebKit/iPhone emulation for date/time inputs in the invoice form, invoice date filters and audit filters. Install both test engines with `npx playwright install --with-deps chromium webkit`. The checks assert controls stay inside their labels and panel content, including empty and populated native inputs at 320, 375, 390, 402, 430 and 768px. Local HTTP-only WebKit fixtures relax the fixture cookie after checking its production Secure flag; deployed cookie settings are unchanged.
