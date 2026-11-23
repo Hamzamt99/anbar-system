@@ -1,6 +1,7 @@
-import React, { useEffect, useState, useRef } from "react";
+import { useCachedPage } from "../components/PageCache";
+import React, { useState, useRef } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { api, amount } from "../api";
+import { amount } from "../api";
 import { Title, Field, ErrorBox, Empty, Modal } from "../components/UI";
 const actions = {
   CREATE: "إنشاء فاتورة",
@@ -53,42 +54,31 @@ export default function AuditLogs() {
   const [filter, setFilter] = useState(initial),
     [applied, setApplied] = useState(initial),
     [page, setPage] = useState(1),
-    [rows, setRows] = useState([]),
-    [total, setTotal] = useState(0),
-    [loading, setLoading] = useState(true),
     [error, setError] = useState(""),
     [selected, setSelected] = useState(null);
   const cursors = useRef({ 1: null });
-  const [hasMore, setHasMore] = useState(false);
-  useEffect(() => {
-    const controller = new AbortController();
-    let alive = true;
-    setLoading(true);
-    const query = new URLSearchParams(
-      Object.entries({
-        ...applied,
-        page,
-        count: page === 1 ? "1" : "0",
-        ...(cursors.current[page] ? { cursor: cursors.current[page] } : {}),
-      }).filter(([, value]) => value !== ""),
-    );
-    api("/audit-logs?" + query, { signal: controller.signal })
-      .then((r) => {
-        if (alive) {
-          setRows(r.data);
-          if (r.total !== undefined) setTotal(r.total);
-          cursors.current[page + 1] = r.next_cursor;
-          setHasMore(r.has_more);
-          setError("");
-        }
-      })
-      .catch((e) => alive && setError(e.message))
-      .finally(() => alive && setLoading(false));
-    return () => {
-      alive = false;
-      controller.abort();
-    };
-  }, [applied, page]);
+  const query = new URLSearchParams(
+    Object.entries({
+      ...applied,
+      page,
+      count: page === 1 ? "1" : "0",
+      ...(cursors.current[page] ? { cursor: cursors.current[page] } : {}),
+    }).filter(([, value]) => value !== ""),
+  );
+  const {
+    result,
+    total: cachedTotal,
+    loading,
+    error: loadError,
+    retry,
+  } = useCachedPage("/audit-logs?" + query, () => {
+    cursors.current = { 1: null };
+    setPage(1);
+  });
+  const rows = result?.data || [],
+    hasMore = result?.has_more || false;
+  const total = cachedTotal || 0;
+  if (result) cursors.current[page + 1] = result.next_cursor;
   const change = (key) => (e) =>
     setFilter({ ...filter, [key]: e.target.value });
   const changes = selected
@@ -111,6 +101,7 @@ export default function AuditLogs() {
             setError("نطاق التاريخ غير صحيح");
             return;
           }
+          setError("");
           cursors.current = { 1: null };
           setApplied({ ...filter });
           setPage(1);
@@ -155,7 +146,8 @@ export default function AuditLogs() {
         />
         <button className="primary">بحث</button>
       </form>
-      <ErrorBox error={error} />
+      <ErrorBox error={error || loadError} />
+      {loadError && <button onClick={retry}>إعادة المحاولة</button>}
       <div className="table-wrap">
         <table role="table" className="responsive-table">
           <thead>

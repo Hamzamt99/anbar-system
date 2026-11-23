@@ -1,3 +1,4 @@
+import { usePageCache } from "./PageCache";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "../api";
 import { masterPath, subscribeMasterChanges } from "../master-events";
@@ -7,6 +8,7 @@ const asciiFold = (value) =>
   value.replace(/[A-Z]/g, (letter) => letter.toLowerCase());
 
 export function useMasterOptions(source, query, open) {
+  const pageCache = usePageCache();
   // A mounted, authenticated picker owns its records. Nothing persists or is shared between accounts.
   const cache = useRef(new Map()),
     flight = useRef(null),
@@ -53,15 +55,30 @@ export function useMasterOptions(source, query, open) {
           ? { data: previous, has_more: true, next_cursor: cursor }
           : null,
       });
-      const promise = api(
-        source +
-          (source.includes("?") ? "&" : "?") +
-          new URLSearchParams({
-            search: text,
-            limit: 50,
-            ...(cursor ? { cursor } : {}),
-          }),
-        { signal: controller.signal },
+      const promise = (
+        pageCache &&
+        ["/customers?include_deleted=1", "/drivers?include_deleted=1"].includes(
+          source,
+        ) &&
+        text === "" &&
+        !cursor
+          ? pageCache.fetch(source).then((result) => {
+              if (!result)
+                throw new Error(
+                  pageCache.read(source)?.error || "تعذر تحميل البيانات",
+                );
+              return result;
+            })
+          : api(
+              source +
+                (source.includes("?") ? "&" : "?") +
+                new URLSearchParams({
+                  search: text,
+                  limit: 50,
+                  ...(cursor ? { cursor } : {}),
+                }),
+              { signal: controller.signal },
+            )
       )
         .then((result) => {
           if (
@@ -113,7 +130,7 @@ export function useMasterOptions(source, query, open) {
       flight.current = { key: requestKey, cursor, controller, id, promise };
       return promise;
     },
-    [source],
+    [source, pageCache],
   );
   useEffect(() => {
     alive.current = true;

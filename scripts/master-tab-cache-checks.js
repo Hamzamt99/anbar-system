@@ -18,7 +18,12 @@ export async function checkMasterTabCache(browser, { base, password }) {
   let reads = 0;
   const timings = [];
   page.on("request", (r) => {
-    if (r.method() === "GET" && paths.has(new URL(r.url()).pathname)) reads++;
+    if (
+      r.method() === "GET" &&
+      paths.has(new URL(r.url()).pathname) &&
+      new URL(r.url()).searchParams.get("include_deleted") !== "1"
+    )
+      reads++;
   });
   try {
     const login = await context.request.post(base + "/api/auth/login", {
@@ -38,7 +43,9 @@ export async function checkMasterTabCache(browser, { base, password }) {
     await page.route("**/api/*", async (route) => {
       if (
         route.request().method() === "GET" &&
-        paths.has(new URL(route.request().url()).pathname)
+        paths.has(new URL(route.request().url()).pathname) &&
+        new URL(route.request().url()).searchParams.get("include_deleted") !==
+          "1"
       ) {
         await route.abort();
       } else await route.continue();

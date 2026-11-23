@@ -1,3 +1,4 @@
+import { PageCacheProvider } from "./components/PageCache";
 import { MasterCacheProvider } from "./components/MasterCache";
 import React, {
   createContext,
@@ -169,7 +170,12 @@ function Layout() {
       <main>
         <ErrorBox error={error} />
         <MasterCacheProvider identity={`${user.id}:${user.role}`}>
-          <Outlet />
+          <PageCacheProvider
+            identity={`${user.id}:${user.role}`}
+            role={user.role}
+          >
+            <Outlet />
+          </PageCacheProvider>
         </MasterCacheProvider>
       </main>
     </div>

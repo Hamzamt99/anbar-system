@@ -1,0 +1,50 @@
+{
+  "initial_reads": 3,
+  "initial_filter_reads": 2,
+  "warm_filter_requests": 0,
+  "warm_navigations": 9,
+  "warm_list_requests": 0,
+  "local_user_mutation_refresh": true,
+  "cross_tab_print_invalidates_invoices_and_audit": true,
+  "logout_clears": true,
+  "cross_tab_logout_discards_private_state": true,
+  "account_switch_respects_role": true,
+  "timings": [
+    {
+      "label": "الفواتير",
+      "elapsed_ms": 87.3
+    },
+    {
+      "label": "المستخدمون",
+      "elapsed_ms": 63.6
+    },
+    {
+      "label": "سجل العمليات",
+      "elapsed_ms": 68.8
+    },
+    {
+      "label": "الفواتير",
+      "elapsed_ms": 62.5
+    },
+    {
+      "label": "المستخدمون",
+      "elapsed_ms": 64.6
+    },
+    {
+      "label": "سجل العمليات",
+      "elapsed_ms": 50.5
+    },
+    {
+      "label": "الفواتير",
+      "elapsed_ms": 51.4
+    },
+    {
+      "label": "المستخدمون",
+      "elapsed_ms": 67
+    },
+    {
+      "label": "سجل العمليات",
+      "elapsed_ms": 65.4
+    }
+  ]
+}

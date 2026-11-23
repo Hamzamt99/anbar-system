@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useRef } from "react";
+import { useCachedPage } from "../components/PageCache";
+import React, { useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api, amount } from "../api";
 import { useAuth } from "../main";
@@ -6,7 +7,6 @@ import { Title, ErrorBox, SearchSelect, Field, Empty } from "../components/UI";
 export default function Invoices() {
   const { user } = useAuth(),
     navigate = useNavigate(),
-    [rows, setRows] = useState([]),
     [masters] = useState({ customers: [], drivers: [] }),
     [filter, setFilter] = useState({
       customer_id: "",
@@ -16,40 +16,30 @@ export default function Invoices() {
     }),
     [applied, setApplied] = useState({}),
     [page, setPage] = useState(1),
-    [total, setTotal] = useState(0),
-    [loading, setLoading] = useState(true),
     [error, setError] = useState(""),
     [printing, setPrinting] = useState(null);
   const canManage = user.role !== "DATA_ENTRY";
   const cursors = useRef({ 1: null });
-  const [hasMore, setHasMore] = useState(false);
-  useEffect(() => {
-    const controller = new AbortController();
-    let alive = true;
-    setLoading(true);
-    const q = new URLSearchParams({
-      ...applied,
-      page,
-      count: page === 1 ? "1" : "0",
-      ...(cursors.current[page] ? { cursor: cursors.current[page] } : {}),
-    });
-    api("/invoices?" + q, { signal: controller.signal })
-      .then((r) => {
-        if (alive) {
-          setRows(r.data);
-          if (r.total !== undefined) setTotal(r.total);
-          cursors.current[page + 1] = r.next_cursor;
-          setHasMore(r.has_more);
-          setError("");
-        }
-      })
-      .catch((e) => alive && setError(e.message))
-      .finally(() => alive && setLoading(false));
-    return () => {
-      alive = false;
-      controller.abort();
-    };
-  }, [applied, page]);
+  const q = new URLSearchParams({
+    ...applied,
+    page,
+    count: page === 1 ? "1" : "0",
+    ...(cursors.current[page] ? { cursor: cursors.current[page] } : {}),
+  });
+  const {
+    result,
+    total: cachedTotal,
+    loading,
+    error: loadError,
+    retry,
+  } = useCachedPage("/invoices?" + q, () => {
+    cursors.current = { 1: null };
+    setPage(1);
+  });
+  const rows = result?.data || [],
+    hasMore = result?.has_more || false;
+  const total = cachedTotal || 0;
+  if (result) cursors.current[page + 1] = result.next_cursor;
   return (
     <>
       <Title>الفواتير</Title>
@@ -62,6 +52,7 @@ export default function Invoices() {
               setError("نطاق التاريخ غير صحيح");
               return;
             }
+            setError("");
             cursors.current = { 1: null };
             setApplied(
               Object.fromEntries(Object.entries(filter).filter(([, v]) => v)),
@@ -98,7 +89,8 @@ export default function Invoices() {
           <button className="primary">بحث ⌕</button>
         </form>
       )}
-      <ErrorBox error={error} />
+      <ErrorBox error={error || loadError} />
+      {loadError && <button onClick={retry}>إعادة المحاولة</button>}
       <div className="table-wrap">
         <table role="table" className="invoice-table responsive-table">
           <thead>

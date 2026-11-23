@@ -279,6 +279,7 @@ export async function checkActionResponsiveness(browser, { base, password }) {
       });
       assert.equal(created.status(), 201);
     }
+    await page.reload(); // Direct API fixture writes intentionally bypass UI invalidation.
     await page
       .getByRole("link", { name: "الفواتير", exact: true })
       .last()
@@ -310,15 +311,34 @@ export async function checkActionResponsiveness(browser, { base, password }) {
         ["previous", "السابق", "1"],
       ]) {
         await measure(endpoint + ":" + direction, async () => {
-          const loaded = page.waitForResponse(
-            (r) =>
-              new URL(r.url()).pathname === "/api/" + endpoint &&
-              new URL(r.url()).searchParams.get("page") === targetPage,
-          );
-          await button(label).click();
-          const response = await loaded;
-          const query = new URL(response.url()).searchParams;
-          if (direction === "next") {
+          if (direction === "previous") {
+            let unexpected = false;
+            const inspect = (request) => {
+              if (new URL(request.url()).pathname === "/api/" + endpoint)
+                unexpected = true;
+            };
+            page.on("request", inspect);
+            await button(label).click();
+            await page.waitForFunction(() =>
+              document
+                .querySelector(".pagination span")
+                ?.textContent.trim()
+                .startsWith("1 /"),
+            );
+            page.off("request", inspect);
+            assert.equal(
+              unexpected,
+              false,
+              "Returning to a cached page must not fetch",
+            );
+          } else {
+            const loaded = page.waitForResponse(
+              (r) =>
+                new URL(r.url()).pathname === "/api/" + endpoint &&
+                new URL(r.url()).searchParams.get("page") === targetPage,
+            );
+            await button(label).click();
+            const query = new URL((await loaded).url()).searchParams;
             assert.equal(query.get("count"), "0");
             assert.ok(query.get("cursor"));
           }

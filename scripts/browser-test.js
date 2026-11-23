@@ -1,3 +1,4 @@
+import { checkPageCache } from "./page-cache-checks.js";
 import { checkMasterTabCache } from "./master-tab-cache-checks.js";
 import { checkActionResponsiveness } from "./action-checks.js";
 import { checkDropdownLoading } from "./dropdown-checks.js";
@@ -429,6 +430,7 @@ try {
   await page.waitForURL("**/invoices");
   await verifyReceiptPrint(browser, { base, password, out });
   await checkActionResponsiveness(browser, { base, password });
+  await checkPageCache(browser, { base, password, invoiceId });
   assert.deepEqual(errors, []);
   assert.deepEqual(policyErrors, []);
   console.log(

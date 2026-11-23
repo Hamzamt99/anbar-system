@@ -1,4 +1,5 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useCachedPage } from "../components/PageCache";
+import React, { useState } from "react";
 import { useAuth } from "../main";
 import { api, roles } from "../api";
 import {
@@ -11,6 +12,10 @@ import {
 } from "../components/UI";
 const initial = { email: "", password: "", role: "DATA_ENTRY" };
 function UserFields({ value, onChange, edit = false, lockRole = false }) {
+  const change = (key) => (event) => {
+    const next = event.target.value;
+    onChange((current) => ({ ...current, [key]: next }));
+  };
   return (
     <>
       <Field
@@ -19,7 +24,7 @@ function UserFields({ value, onChange, edit = false, lockRole = false }) {
         dir="ltr"
         required
         value={value.email}
-        onChange={(e) => onChange({ ...value, email: e.target.value })}
+        onChange={change("email")}
       />
       {!edit && (
         <Field
@@ -30,7 +35,7 @@ function UserFields({ value, onChange, edit = false, lockRole = false }) {
           maxLength={128}
           required
           value={value.password}
-          onChange={(e) => onChange({ ...value, password: e.target.value })}
+          onChange={change("password")}
         />
       )}
       <Field label="الدور">
@@ -42,7 +47,7 @@ function UserFields({ value, onChange, edit = false, lockRole = false }) {
               ? "لا يمكن تخفيض دور مدير النظام العام من خلال النظام"
               : undefined
           }
-          onChange={(e) => onChange({ ...value, role: e.target.value })}
+          onChange={change("role")}
         >
           {Object.entries(roles).map(([v, l]) => (
             <option key={v} value={v}>
@@ -56,41 +61,23 @@ function UserFields({ value, onChange, edit = false, lockRole = false }) {
 }
 export default function Users() {
   const { user } = useAuth();
-  const [rows, setRows] = useState([]),
-    [form, setForm] = useState(initial),
+  const [form, setForm] = useState(initial),
     [error, setError] = useState(""),
-    [loading, setLoading] = useState(true),
     [busy, setBusy] = useState(false),
     [edit, setEdit] = useState(null),
     [reset, setReset] = useState(null),
     [remove, setRemove] = useState(null),
     [modalError, setModalError] = useState("");
-  const [page, setPage] = useState(1),
-    [total, setTotal] = useState(0);
-  const request = useRef(null);
-  const load = useCallback(async () => {
-    request.current?.abort();
-    const controller = new AbortController();
-    request.current = controller;
-    setLoading(true);
-    try {
-      const result = await api("/users?page=" + page, {
-        signal: controller.signal,
-      });
-      if (controller.signal.aborted) return;
-      setRows(result.data);
-      setTotal(result.total);
-      setError("");
-    } catch (e) {
-      if (!controller.signal.aborted) setError(e.message);
-    } finally {
-      if (!controller.signal.aborted) setLoading(false);
-    }
-  }, [page]);
-  useEffect(() => {
-    void load();
-    return () => request.current?.abort();
-  }, [load]);
+  const [page, setPage] = useState(1);
+  const {
+    result,
+    loading,
+    error: loadError,
+    load,
+    retry,
+  } = useCachedPage("/users?page=" + page, () => setPage(1));
+  const rows = result?.data || [],
+    total = result?.total || 0;
   async function save(e) {
     e.preventDefault();
     setBusy(true);
@@ -116,7 +103,8 @@ export default function Users() {
           إضافة مستخدم
         </button>
       </form>
-      <ErrorBox error={error} />
+      <ErrorBox error={error || loadError} />
+      {loadError && <button onClick={retry}>إعادة المحاولة</button>}
       <div className="table-wrap">
         <table role="table" className="responsive-table">
           <thead>
