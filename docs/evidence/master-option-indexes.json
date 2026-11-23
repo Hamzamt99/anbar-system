@@ -1,0 +1,46 @@
+{
+  "production_indexes": [
+    {
+      "name": "customers_active_name",
+      "tbl_name": "customers"
+    },
+    {
+      "name": "drivers_active_name",
+      "tbl_name": "drivers"
+    },
+    {
+      "name": "mix_types_active_name",
+      "tbl_name": "mix_types"
+    },
+    {
+      "name": "mixers_active_name",
+      "tbl_name": "mixers"
+    },
+    {
+      "name": "pumps_active_name",
+      "tbl_name": "pumps"
+    },
+    {
+      "name": "vehicles_active_name",
+      "tbl_name": "vehicles"
+    }
+  ],
+  "readonly_bounded_select_samples": [
+    {
+      "query": "mix-types",
+      "sql_ms": 0.4636,
+      "rows_read": 1
+    },
+    {
+      "query": "drivers",
+      "sql_ms": 0.2363,
+      "rows_read": 2
+    },
+    {
+      "query": "customers",
+      "sql_ms": 0.0874,
+      "rows_read": 4
+    }
+  ],
+  "note": "SQL execution times exclude network and authentication. Contains searches can scan active-name index candidates."
+}

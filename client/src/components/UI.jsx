@@ -1,7 +1,7 @@
-import { api } from "../api";
+import { useMasterOptions } from "./useMasterOptions";
 import React, {
-  useId,
   useEffect,
+  useId,
   useLayoutEffect,
   useRef,
   useState,
@@ -128,49 +128,11 @@ export function SearchSelect({
   const [query, setQuery] = useState(""),
     [open, setOpen] = useState(false),
     [active, setActive] = useState(0);
-  const [remote, setRemote] = useState([]),
-    [next, setNext] = useState(null),
-    [loading, setLoading] = useState(false),
-    [error, setError] = useState("");
+  const remoteOptions = useMasterOptions(source, query, open);
+  const { data: remote, next, loading, ready, error, loadMore } = remoteOptions;
   const remembered = useRef(null),
-    generation = useRef(0);
-  useEffect(() => {
-    if (!source || !open) return;
-    const controller = new AbortController();
-    const current = ++generation.current;
-    setLoading(true);
-    setError("");
-    const timer = setTimeout(() => {
-      api(
-        source +
-          (source.includes("?") ? "&" : "?") +
-          new URLSearchParams({ search: query, limit: 50 }),
-        { signal: controller.signal },
-      )
-        .then((r) => {
-          if (controller.signal.aborted || current !== generation.current)
-            return;
-          setRemote(r.data);
-          setNext(r.has_more ? r.next_cursor : null);
-        })
-        .catch((e) => {
-          if (
-            !controller.signal.aborted &&
-            current === generation.current &&
-            e.name !== "AbortError"
-          )
-            setError(e.message);
-        })
-        .finally(() => {
-          if (!controller.signal.aborted) setLoading(false);
-        });
-    }, 200);
-    return () => {
-      clearTimeout(timer);
-      controller.abort();
-      generation.current++;
-    };
-  }, [source, open, query]);
+    blurTimer = useRef(null);
+  useEffect(() => () => clearTimeout(blurTimer.current), []);
   const choices = source
     ? [
         ...remote,
@@ -218,14 +180,18 @@ export function SearchSelect({
           placeholder={`ابحث عن ${label}...`}
           value={open ? query : selected?.name || ""}
           onFocus={() => {
+            clearTimeout(blurTimer.current);
             setOpen(true);
             setQuery("");
             setActive(0);
           }}
-          onBlur={() => setTimeout(() => setOpen(false), 120)}
+          onBlur={(event) => {
+            if (event.currentTarget.parentElement.contains(event.relatedTarget))
+              return;
+            clearTimeout(blurTimer.current);
+            blurTimer.current = setTimeout(() => setOpen(false), 120);
+          }}
           onChange={(e) => {
-            setRemote([]);
-            setNext(null);
             setQuery(e.target.value);
             setActive(0);
             setOpen(true);
@@ -255,6 +221,7 @@ export function SearchSelect({
           className="select-toggle"
           aria-label={`فتح ${label}`}
           onClick={() => {
+            clearTimeout(blurTimer.current);
             setOpen(!open);
             setQuery("");
           }}
@@ -289,37 +256,18 @@ export function SearchSelect({
                 {x.name}
               </li>
             ))}
-            {loading && <li>جارٍ التحميل...</li>}
+            {loading && !ready && <li>جارٍ التحميل...</li>}
             {error && <li role="alert">{error}</li>}
-            {!loading && !error && !options.length && <li>لا توجد نتائج</li>}
+            {!error && !options.length && (!loading || ready) && (
+              <li>لا توجد نتائج</li>
+            )}
             {next && (
               <li>
                 <button
                   type="button"
                   onMouseDown={(e) => e.preventDefault()}
                   disabled={loading}
-                  onClick={async () => {
-                    const current = generation.current;
-                    try {
-                      setLoading(true);
-                      const r = await api(
-                        source +
-                          (source.includes("?") ? "&" : "?") +
-                          new URLSearchParams({
-                            search: query,
-                            limit: 50,
-                            cursor: next,
-                          }),
-                      );
-                      if (current !== generation.current) return;
-                      setRemote((old) => [...old, ...r.data]);
-                      setNext(r.has_more ? r.next_cursor : null);
-                    } catch (e) {
-                      if (current === generation.current) setError(e.message);
-                    } finally {
-                      if (current === generation.current) setLoading(false);
-                    }
-                  }}
+                  onClick={loadMore}
                 >
                   المزيد
                 </button>

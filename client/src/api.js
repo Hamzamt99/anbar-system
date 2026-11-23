@@ -1,3 +1,4 @@
+import { notifyMasterChange } from "./master-events";
 export async function api(path, options = {}) {
   const response = await fetch("/api" + path, {
     ...options,
@@ -20,6 +21,8 @@ export async function api(path, options = {}) {
       location.assign("/login");
     throw new Error(result.error || "تعذر إتمام العملية");
   }
+  if (["POST", "PUT", "DELETE"].includes(options.method))
+    notifyMasterChange(path);
   return result;
 }
 export const roles = {

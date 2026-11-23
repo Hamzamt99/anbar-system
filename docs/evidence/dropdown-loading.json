@@ -1,0 +1,13 @@
+{
+  "prefetch_before_first_focus": true,
+  "warm_open_ms": [
+    59,
+    38,
+    38
+  ],
+  "warm_options_visible_while_network_held": true,
+  "small_catalog_search": true,
+  "cross_tab_create_edit_delete_invalidation": true,
+  "bounded_large_catalog_pagination_and_remote_search": true,
+  "logout_unmounts_private_picker_state": true
+}

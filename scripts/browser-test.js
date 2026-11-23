@@ -1,3 +1,4 @@
+import { checkDropdownLoading } from "./dropdown-checks.js";
 import { checkWebKitMobile } from "./webkit-mobile-checks.js";
 import { spawn, spawnSync } from "node:child_process";
 import { mkdir, writeFile, rm } from "node:fs/promises";
@@ -170,6 +171,7 @@ try {
     .getByRole("cell", { name: "شركة البناء الحديث", exact: true })
     .waitFor();
   await page.screenshot({ path: out + "/02-master.png", fullPage: true });
+  await checkDropdownLoading(browser, { base, password });
   await page.getByRole("link", { name: "إنشاء فاتورة", exact: true }).click();
   for (const [, , label, value] of fixtures) {
     await page.getByRole("combobox", { name: new RegExp(label) }).fill(value);

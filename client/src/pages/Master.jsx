@@ -48,17 +48,20 @@ export default function Master() {
     const controller = new AbortController();
     let alive = true;
     setLoading(true);
-    const timer = setTimeout(() => {
-      api(`/${tab}?` + queryString(), { signal: controller.signal })
-        .then((r) => {
-          if (alive) {
-            accept(r);
-            setError("");
-          }
-        })
-        .catch((e) => alive && setError(e.message))
-        .finally(() => alive && setLoading(false));
-    }, 200);
+    const timer = setTimeout(
+      () => {
+        api(`/${tab}?` + queryString(), { signal: controller.signal })
+          .then((r) => {
+            if (alive) {
+              accept(r);
+              setError("");
+            }
+          })
+          .catch((e) => alive && setError(e.message))
+          .finally(() => alive && setLoading(false));
+      },
+      search ? 180 : 0,
+    );
     return () => {
       alive = false;
       clearTimeout(timer);
