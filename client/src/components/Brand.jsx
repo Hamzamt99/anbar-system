@@ -3,14 +3,14 @@ import logoSource from "../assets/anbar-logo.png";
 
 export function Logo({ small = false }) {
   return (
-    <svg
+    <img
       className={small ? "brand-mark small" : "brand-mark"}
-      viewBox={small ? "470 100 555 445" : "270 100 900 930"}
-      aria-hidden="true"
-      focusable="false"
-    >
-      <image href={logoSource} width="1435" height="1096" />
-    </svg>
+      src={logoSource}
+      width="1774"
+      height="887"
+      alt="شركة العنبر للخرسانة"
+      decoding="async"
+    />
   );
 }
 

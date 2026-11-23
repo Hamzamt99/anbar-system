@@ -107,8 +107,8 @@ export default function Receipt() {
               ) : (
                 <img
                   src={logoSource}
-                  width="1435"
-                  height="1096"
+                  width="1774"
+                  height="887"
                   alt="شركة العنبر للخرسانة"
                   onError={() => setLogoFailed(true)}
                 />

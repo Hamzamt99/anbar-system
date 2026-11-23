@@ -175,7 +175,7 @@ New migrations: `0006_invoice_integrity.sql` and `0007_query_performance.sql`. M
 
 - Workers Paid confirmed by successful CPU-budget deployment and hosted password/application checks.
 - Production: https://anbar-system.anbar-system.workers.dev
-- Active Worker version: `76085b30-c9d0-4c3e-a46e-82ac8cd8284b`.
+- Hardening release Worker version: `76085b30-c9d0-4c3e-a46e-82ac8cd8284b`.
 - Compatible rollback Worker version: `9f97a91a-0f7d-4580-9f87-173adf85f634`.
 - Both production migrations applied successfully after a private export and Time Travel bookmark. Offline comparison of pre/post exports verified all pre-existing business rows and original columns unchanged; zero foreign-key errors; seven triggers and seven migrations. No production test records or login sessions were created.
 - Live HTML and SPA route HTTP 200, strict headers and HSTS verified; HTTP redirected 308; unauthenticated API returned 401/no-store; fingerprinted JS returned 200/immutable. [Live smoke](evidence/production-smoke.json), [integrity result](evidence/production-integrity.json).

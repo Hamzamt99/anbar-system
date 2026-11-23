@@ -66,8 +66,9 @@ function Login() {
           }
         }}
       >
-        <Logo />
-        <h1>شركة العنبر للخرسانة</h1>
+        <h1 className="logo-heading">
+          <Logo />
+        </h1>
         <ErrorBox error={error} />
         <Field
           label="البريد الإلكتروني"
@@ -113,7 +114,6 @@ function Layout() {
       >
         <NavLink className="brand" to="/invoices/new">
           <Logo small />
-          شركة العنبر للخرسانة
         </NavLink>
         <button
           ref={menuButton}

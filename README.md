@@ -162,3 +162,7 @@ Manage mixer numbers under **البيانات الأساسية → المكسر*
 See [optimization report](docs/optimization-report.md) for the baseline, changes, measured results and deployment record, and [operations runbook](docs/operations.md) for backups, recovery, rollback, monitoring, printer settings and support boundaries. New invoice creation requires an `Idempotency-Key` header; edits require the current integer `version`. The supplied frontend handles both. Refresh open application tabs after this coordinated release.
 
 Run `npm run lint`, `npm test`, `npm run test:browser`, `npm run test:recovery`, `npm run build:worker` and `npm audit --audit-level=high`. Recovery verification requires Python 3 and GPG. `npm run test:performance` uses synthetic local D1 only. CI uses Node 22 and no production credentials.
+
+## Company logo
+
+Header, login and receipt use the supplied transparent triangular PNG with its built-in company name. There is no additional visible company-name caption next to the healthy logo. Full artwork and aspect ratio are preserved; image alt text supplies accessible names. Receipt text fallback appears only if the image fails.

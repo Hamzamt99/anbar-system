@@ -53,7 +53,9 @@ for kind in ("normal", "long"):
         image = page.images[0]
         assert image['x0'] < WIDTH / 3 and image['top'] < HEIGHT / 4
         assert image['x0'] >= margin-.3 and image['top'] >= margin-.3
-        assert abs(image['width'] / image['height'] - 1435 / 1096) < .005
+        assert image['srcsize'] == (1774, 887)
+        # Chromium snaps image placement to pixels; allow one 96-dpi pixel.
+        assert abs(image['height'] - image['width'] / (1774 / 887)) < .75
         # The two large title words must be centered near the top of the page.
         title = [c for c in page.chars if c['size'] > 20 and c['top'] < 60]
         assert title
