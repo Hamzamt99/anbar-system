@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "../main";
 import { api, roles } from "../api";
 import {
@@ -67,20 +67,30 @@ export default function Users() {
     [modalError, setModalError] = useState("");
   const [page, setPage] = useState(1),
     [total, setTotal] = useState(0);
-  async function load() {
+  const request = useRef(null);
+  const load = useCallback(async () => {
+    request.current?.abort();
+    const controller = new AbortController();
+    request.current = controller;
+    setLoading(true);
     try {
-      const result = await api("/users?page=" + page);
+      const result = await api("/users?page=" + page, {
+        signal: controller.signal,
+      });
+      if (controller.signal.aborted) return;
       setRows(result.data);
       setTotal(result.total);
+      setError("");
     } catch (e) {
-      setError(e.message);
+      if (!controller.signal.aborted) setError(e.message);
     } finally {
-      setLoading(false);
+      if (!controller.signal.aborted) setLoading(false);
     }
-  }
-  useEffect(() => {
-    load();
   }, [page]);
+  useEffect(() => {
+    void load();
+    return () => request.current?.abort();
+  }, [load]);
   async function save(e) {
     e.preventDefault();
     setBusy(true);
@@ -168,14 +178,17 @@ export default function Users() {
       </div>
       {total > 20 && (
         <div className="pagination">
-          <button disabled={page === 1} onClick={() => setPage(page - 1)}>
+          <button
+            disabled={page === 1 || loading}
+            onClick={() => setPage(page - 1)}
+          >
             السابق
           </button>
           <span>
             {page} / {Math.ceil(total / 20)}
           </span>
           <button
-            disabled={page * 20 >= total}
+            disabled={page * 20 >= total || loading}
             onClick={() => setPage(page + 1)}
           >
             التالي

@@ -1,0 +1,957 @@
+{
+  "environment": "Local D1 SQL metrics plus local HTTP Express/auth measurements; no hosted network/Worker CPU capacity guarantee",
+  "datasets": [
+    10000,
+    100000
+  ],
+  "results": [
+    {
+      "size": 10000,
+      "phase": "before",
+      "query": "invoice_list",
+      "samples": 25,
+      "p50_ms": 13.81,
+      "p95_ms": 19.17,
+      "p50_sql_ms": 1,
+      "rows_read_p50": 10020,
+      "rows_written_p50": 0,
+      "plan": [
+        "SCAN invoices USING INDEX invoice_date"
+      ]
+    },
+    {
+      "size": 10000,
+      "phase": "before",
+      "query": "customer_date",
+      "samples": 25,
+      "p50_ms": 13.47,
+      "p95_ms": 17.05,
+      "p50_sql_ms": 2,
+      "rows_read_p50": 14200,
+      "rows_written_p50": 0,
+      "plan": [
+        "SCAN invoices USING INDEX invoice_date"
+      ]
+    },
+    {
+      "size": 10000,
+      "phase": "before",
+      "query": "driver",
+      "samples": 25,
+      "p50_ms": 12.06,
+      "p95_ms": 14.51,
+      "p50_sql_ms": 2,
+      "rows_read_p50": 10200,
+      "rows_written_p50": 0,
+      "plan": [
+        "SCAN invoices USING INDEX invoice_date"
+      ]
+    },
+    {
+      "size": 10000,
+      "phase": "before",
+      "query": "combined",
+      "samples": 25,
+      "p50_ms": 12.88,
+      "p95_ms": 16.7,
+      "p50_sql_ms": 2,
+      "rows_read_p50": 16000,
+      "rows_written_p50": 0,
+      "plan": [
+        "SCAN invoices USING INDEX invoice_date"
+      ]
+    },
+    {
+      "size": 10000,
+      "phase": "before",
+      "query": "date_range",
+      "samples": 25,
+      "p50_ms": 12.43,
+      "p95_ms": 15.29,
+      "p50_sql_ms": 2,
+      "rows_read_p50": 15420,
+      "rows_written_p50": 0,
+      "plan": [
+        "SCAN invoices USING INDEX invoice_date"
+      ]
+    },
+    {
+      "size": 10000,
+      "phase": "before",
+      "query": "deep_page",
+      "samples": 25,
+      "p50_ms": 7.27,
+      "p95_ms": 9.15,
+      "p50_sql_ms": 0,
+      "rows_read_p50": 9020,
+      "rows_written_p50": 0,
+      "plan": [
+        "SCAN invoices USING INDEX invoice_date"
+      ]
+    },
+    {
+      "size": 10000,
+      "phase": "before",
+      "query": "detail",
+      "samples": 25,
+      "p50_ms": 5.98,
+      "p95_ms": 7.71,
+      "p50_sql_ms": 0,
+      "rows_read_p50": 1,
+      "rows_written_p50": 0,
+      "plan": [
+        "SEARCH invoices USING INTEGER PRIMARY KEY (rowid=?)"
+      ]
+    },
+    {
+      "size": 10000,
+      "phase": "before",
+      "query": "number_lookup",
+      "samples": 25,
+      "p50_ms": 5.47,
+      "p95_ms": 8.85,
+      "p50_sql_ms": 0,
+      "rows_read_p50": 1,
+      "rows_written_p50": 0,
+      "plan": [
+        "SEARCH invoices USING INTEGER PRIMARY KEY (rowid=?)"
+      ]
+    },
+    {
+      "size": 10000,
+      "phase": "before",
+      "query": "quantity",
+      "samples": 25,
+      "p50_ms": 5.97,
+      "p95_ms": 9.42,
+      "p50_sql_ms": 0,
+      "rows_read_p50": 11,
+      "rows_written_p50": 0,
+      "plan": [
+        "SEARCH invoices USING INDEX invoice_group (customer_id=? AND date=?)"
+      ]
+    },
+    {
+      "size": 10000,
+      "phase": "before",
+      "query": "audit",
+      "samples": 25,
+      "p50_ms": 6.3,
+      "p95_ms": 9.59,
+      "p50_sql_ms": 1,
+      "rows_read_p50": 10000,
+      "rows_written_p50": 0,
+      "plan": [
+        "SCAN audit_logs"
+      ]
+    },
+    {
+      "size": 10000,
+      "phase": "before",
+      "query": "create",
+      "samples": 25,
+      "p50_ms": 6.89,
+      "p95_ms": 9.3,
+      "p50_sql_ms": 0,
+      "rows_read_p50": 641,
+      "rows_written_p50": 33,
+      "plan": []
+    },
+    {
+      "size": 10000,
+      "phase": "before",
+      "query": "invoice_list",
+      "measurement": "local HTTP Express + real local D1, including auth and creation safeguards",
+      "samples": 25,
+      "p50_ms": 23.79,
+      "p95_ms": 27.36,
+      "rows_read": "See corresponding SQL/trigger measurement; no aggregate D1 meta exposed by API"
+    },
+    {
+      "size": 10000,
+      "phase": "before",
+      "query": "customer_date",
+      "measurement": "local HTTP Express + real local D1, including auth and creation safeguards",
+      "samples": 25,
+      "p50_ms": 22.58,
+      "p95_ms": 26.54,
+      "rows_read": "See corresponding SQL/trigger measurement; no aggregate D1 meta exposed by API"
+    },
+    {
+      "size": 10000,
+      "phase": "before",
+      "query": "driver",
+      "measurement": "local HTTP Express + real local D1, including auth and creation safeguards",
+      "samples": 25,
+      "p50_ms": 21.99,
+      "p95_ms": 25.53,
+      "rows_read": "See corresponding SQL/trigger measurement; no aggregate D1 meta exposed by API"
+    },
+    {
+      "size": 10000,
+      "phase": "before",
+      "query": "combined",
+      "measurement": "local HTTP Express + real local D1, including auth and creation safeguards",
+      "samples": 25,
+      "p50_ms": 23.38,
+      "p95_ms": 28.53,
+      "rows_read": "See corresponding SQL/trigger measurement; no aggregate D1 meta exposed by API"
+    },
+    {
+      "size": 10000,
+      "phase": "before",
+      "query": "detail",
+      "measurement": "local HTTP Express + real local D1, including auth and creation safeguards",
+      "samples": 25,
+      "p50_ms": 15.57,
+      "p95_ms": 18.97,
+      "rows_read": "See corresponding SQL/trigger measurement; no aggregate D1 meta exposed by API"
+    },
+    {
+      "size": 10000,
+      "phase": "before",
+      "query": "quantity",
+      "measurement": "local HTTP Express + real local D1, including auth and creation safeguards",
+      "samples": 25,
+      "p50_ms": 15.34,
+      "p95_ms": 25.63,
+      "rows_read": "See corresponding SQL/trigger measurement; no aggregate D1 meta exposed by API"
+    },
+    {
+      "size": 10000,
+      "phase": "before",
+      "query": "audit",
+      "measurement": "local HTTP Express + real local D1, including auth and creation safeguards",
+      "samples": 25,
+      "p50_ms": 18.9,
+      "p95_ms": 24.62,
+      "rows_read": "See corresponding SQL/trigger measurement; no aggregate D1 meta exposed by API"
+    },
+    {
+      "size": 10000,
+      "phase": "before",
+      "query": "create",
+      "measurement": "local HTTP Express + real local D1, including auth and creation safeguards",
+      "samples": 25,
+      "p50_ms": 57.99,
+      "p95_ms": 71.05,
+      "rows_read": "See corresponding SQL/trigger measurement; no aggregate D1 meta exposed by API"
+    },
+    {
+      "size": 10000,
+      "phase": "after",
+      "query": "invoice_list",
+      "samples": 25,
+      "p50_ms": 6.47,
+      "p95_ms": 7.4,
+      "p50_sql_ms": 0,
+      "rows_read_p50": 21,
+      "rows_written_p50": 0,
+      "plan": [
+        "SCAN invoices USING INDEX invoice_date"
+      ]
+    },
+    {
+      "size": 10000,
+      "phase": "after",
+      "query": "customer_date",
+      "samples": 25,
+      "p50_ms": 6.73,
+      "p95_ms": 9.77,
+      "p50_sql_ms": 0,
+      "rows_read_p50": 21,
+      "rows_written_p50": 0,
+      "plan": [
+        "SEARCH invoices USING INDEX invoice_customer_order (customer_id=? AND date>? AND date<?)"
+      ]
+    },
+    {
+      "size": 10000,
+      "phase": "after",
+      "query": "driver",
+      "samples": 25,
+      "p50_ms": 6.18,
+      "p95_ms": 7.61,
+      "p50_sql_ms": 0,
+      "rows_read_p50": 21,
+      "rows_written_p50": 0,
+      "plan": [
+        "SEARCH invoices USING INDEX invoice_driver (driver_id=?)"
+      ]
+    },
+    {
+      "size": 10000,
+      "phase": "after",
+      "query": "combined",
+      "samples": 25,
+      "p50_ms": 6.98,
+      "p95_ms": 11.39,
+      "p50_sql_ms": 0,
+      "rows_read_p50": 21,
+      "rows_written_p50": 0,
+      "plan": [
+        "SEARCH invoices USING INDEX invoice_customer_driver_order (customer_id=? AND driver_id=? AND date>? AND date<?)"
+      ]
+    },
+    {
+      "size": 10000,
+      "phase": "after",
+      "query": "date_range",
+      "samples": 25,
+      "p50_ms": 6.25,
+      "p95_ms": 7.62,
+      "p50_sql_ms": 0,
+      "rows_read_p50": 21,
+      "rows_written_p50": 0,
+      "plan": [
+        "SEARCH invoices USING INDEX invoice_date (date>? AND date<?)"
+      ]
+    },
+    {
+      "size": 10000,
+      "phase": "after",
+      "query": "deep_page",
+      "samples": 25,
+      "p50_ms": 5.73,
+      "p95_ms": 7.98,
+      "p50_sql_ms": 0,
+      "rows_read_p50": 121,
+      "rows_written_p50": 0,
+      "plan": [
+        "SEARCH invoices USING INDEX invoice_date (date<?)"
+      ]
+    },
+    {
+      "size": 10000,
+      "phase": "after",
+      "query": "detail",
+      "samples": 25,
+      "p50_ms": 5.79,
+      "p95_ms": 7.37,
+      "p50_sql_ms": 0,
+      "rows_read_p50": 1,
+      "rows_written_p50": 0,
+      "plan": [
+        "SEARCH invoices USING INTEGER PRIMARY KEY (rowid=?)"
+      ]
+    },
+    {
+      "size": 10000,
+      "phase": "after",
+      "query": "number_lookup",
+      "samples": 25,
+      "p50_ms": 4.57,
+      "p95_ms": 6.32,
+      "p50_sql_ms": 0,
+      "rows_read_p50": 1,
+      "rows_written_p50": 0,
+      "plan": [
+        "SEARCH invoices USING INTEGER PRIMARY KEY (rowid=?)"
+      ]
+    },
+    {
+      "size": 10000,
+      "phase": "after",
+      "query": "quantity",
+      "samples": 25,
+      "p50_ms": 5.32,
+      "p95_ms": 6.33,
+      "p50_sql_ms": 0,
+      "rows_read_p50": 1,
+      "rows_written_p50": 0,
+      "plan": [
+        "SEARCH invoices USING INDEX invoice_group (customer_id=? AND date=?)"
+      ]
+    },
+    {
+      "size": 10000,
+      "phase": "after",
+      "query": "audit",
+      "samples": 25,
+      "p50_ms": 5.27,
+      "p95_ms": 6.9,
+      "p50_sql_ms": 0,
+      "rows_read_p50": 2,
+      "rows_written_p50": 0,
+      "plan": [
+        "SEARCH audit_logs USING INDEX audit_invoice (invoice_id=?)"
+      ]
+    },
+    {
+      "size": 10000,
+      "phase": "after",
+      "query": "create",
+      "samples": 25,
+      "p50_ms": 5.26,
+      "p95_ms": 7.46,
+      "p50_sql_ms": 0,
+      "rows_read_p50": 70,
+      "rows_written_p50": 14,
+      "plan": []
+    },
+    {
+      "size": 10000,
+      "phase": "after",
+      "query": "invoice_list",
+      "measurement": "local HTTP Express + real local D1, including auth and creation safeguards",
+      "samples": 25,
+      "p50_ms": 13.35,
+      "p95_ms": 17.57,
+      "rows_read": "See corresponding SQL/trigger measurement; no aggregate D1 meta exposed by API"
+    },
+    {
+      "size": 10000,
+      "phase": "after",
+      "query": "customer_date",
+      "measurement": "local HTTP Express + real local D1, including auth and creation safeguards",
+      "samples": 25,
+      "p50_ms": 14.04,
+      "p95_ms": 20.64,
+      "rows_read": "See corresponding SQL/trigger measurement; no aggregate D1 meta exposed by API"
+    },
+    {
+      "size": 10000,
+      "phase": "after",
+      "query": "driver",
+      "measurement": "local HTTP Express + real local D1, including auth and creation safeguards",
+      "samples": 25,
+      "p50_ms": 13.36,
+      "p95_ms": 16.52,
+      "rows_read": "See corresponding SQL/trigger measurement; no aggregate D1 meta exposed by API"
+    },
+    {
+      "size": 10000,
+      "phase": "after",
+      "query": "combined",
+      "measurement": "local HTTP Express + real local D1, including auth and creation safeguards",
+      "samples": 25,
+      "p50_ms": 14.03,
+      "p95_ms": 17.17,
+      "rows_read": "See corresponding SQL/trigger measurement; no aggregate D1 meta exposed by API"
+    },
+    {
+      "size": 10000,
+      "phase": "after",
+      "query": "detail",
+      "measurement": "local HTTP Express + real local D1, including auth and creation safeguards",
+      "samples": 25,
+      "p50_ms": 13.64,
+      "p95_ms": 16.26,
+      "rows_read": "See corresponding SQL/trigger measurement; no aggregate D1 meta exposed by API"
+    },
+    {
+      "size": 10000,
+      "phase": "after",
+      "query": "quantity",
+      "measurement": "local HTTP Express + real local D1, including auth and creation safeguards",
+      "samples": 25,
+      "p50_ms": 13.85,
+      "p95_ms": 19.29,
+      "rows_read": "See corresponding SQL/trigger measurement; no aggregate D1 meta exposed by API"
+    },
+    {
+      "size": 10000,
+      "phase": "after",
+      "query": "audit",
+      "measurement": "local HTTP Express + real local D1, including auth and creation safeguards",
+      "samples": 25,
+      "p50_ms": 13.4,
+      "p95_ms": 18.56,
+      "rows_read": "See corresponding SQL/trigger measurement; no aggregate D1 meta exposed by API"
+    },
+    {
+      "size": 10000,
+      "phase": "after",
+      "query": "create",
+      "measurement": "local HTTP Express + real local D1, including auth and creation safeguards",
+      "samples": 25,
+      "p50_ms": 45.07,
+      "p95_ms": 60.42,
+      "rows_read": "See corresponding SQL/trigger measurement; no aggregate D1 meta exposed by API"
+    },
+    {
+      "size": 10000,
+      "phase": "after",
+      "query": "initial_exact_count",
+      "elapsed_ms": 4.79863800000021,
+      "rows_read": 10000,
+      "plan": [
+        "SCAN invoices USING COVERING INDEX invoice_driver"
+      ]
+    },
+    {
+      "size": 100000,
+      "phase": "before",
+      "query": "invoice_list",
+      "samples": 25,
+      "p50_ms": 16.06,
+      "p95_ms": 18.51,
+      "p50_sql_ms": 7,
+      "rows_read_p50": 100020,
+      "rows_written_p50": 0,
+      "plan": [
+        "SCAN invoices USING INDEX invoice_date"
+      ]
+    },
+    {
+      "size": 100000,
+      "phase": "before",
+      "query": "customer_date",
+      "samples": 25,
+      "p50_ms": 23.52,
+      "p95_ms": 25.97,
+      "p50_sql_ms": 12,
+      "rows_read_p50": 140200,
+      "rows_written_p50": 0,
+      "plan": [
+        "SCAN invoices USING INDEX invoice_date"
+      ]
+    },
+    {
+      "size": 100000,
+      "phase": "before",
+      "query": "driver",
+      "samples": 25,
+      "p50_ms": 21.51,
+      "p95_ms": 24.96,
+      "p50_sql_ms": 9,
+      "rows_read_p50": 100400,
+      "rows_written_p50": 0,
+      "plan": [
+        "SCAN invoices USING INDEX invoice_date"
+      ]
+    },
+    {
+      "size": 100000,
+      "phase": "before",
+      "query": "combined",
+      "samples": 25,
+      "p50_ms": 24.12,
+      "p95_ms": 27.06,
+      "p50_sql_ms": 13,
+      "rows_read_p50": 144000,
+      "rows_written_p50": 0,
+      "plan": [
+        "SCAN invoices USING INDEX invoice_date"
+      ]
+    },
+    {
+      "size": 100000,
+      "phase": "before",
+      "query": "date_range",
+      "samples": 25,
+      "p50_ms": 24.55,
+      "p95_ms": 26.6,
+      "p50_sql_ms": 13,
+      "rows_read_p50": 154020,
+      "rows_written_p50": 0,
+      "plan": [
+        "SCAN invoices USING INDEX invoice_date"
+      ]
+    },
+    {
+      "size": 100000,
+      "phase": "before",
+      "query": "deep_page",
+      "samples": 25,
+      "p50_ms": 9.52,
+      "p95_ms": 11.78,
+      "p50_sql_ms": 3,
+      "rows_read_p50": 90020,
+      "rows_written_p50": 0,
+      "plan": [
+        "SCAN invoices USING INDEX invoice_date"
+      ]
+    },
+    {
+      "size": 100000,
+      "phase": "before",
+      "query": "detail",
+      "samples": 25,
+      "p50_ms": 5.81,
+      "p95_ms": 8.05,
+      "p50_sql_ms": 0,
+      "rows_read_p50": 1,
+      "rows_written_p50": 0,
+      "plan": [
+        "SEARCH invoices USING INTEGER PRIMARY KEY (rowid=?)"
+      ]
+    },
+    {
+      "size": 100000,
+      "phase": "before",
+      "query": "number_lookup",
+      "samples": 25,
+      "p50_ms": 5.7,
+      "p95_ms": 7.35,
+      "p50_sql_ms": 0,
+      "rows_read_p50": 1,
+      "rows_written_p50": 0,
+      "plan": [
+        "SEARCH invoices USING INTEGER PRIMARY KEY (rowid=?)"
+      ]
+    },
+    {
+      "size": 100000,
+      "phase": "before",
+      "query": "quantity",
+      "samples": 25,
+      "p50_ms": 5.64,
+      "p95_ms": 8.07,
+      "p50_sql_ms": 0,
+      "rows_read_p50": 101,
+      "rows_written_p50": 0,
+      "plan": [
+        "SEARCH invoices USING INDEX invoice_group (customer_id=? AND date=?)"
+      ]
+    },
+    {
+      "size": 100000,
+      "phase": "before",
+      "query": "audit",
+      "samples": 25,
+      "p50_ms": 11.96,
+      "p95_ms": 14.86,
+      "p50_sql_ms": 5,
+      "rows_read_p50": 100000,
+      "rows_written_p50": 0,
+      "plan": [
+        "SCAN audit_logs"
+      ]
+    },
+    {
+      "size": 100000,
+      "phase": "before",
+      "query": "create",
+      "samples": 25,
+      "p50_ms": 10.45,
+      "p95_ms": 13.71,
+      "p50_sql_ms": 4,
+      "rows_read_p50": 13241,
+      "rows_written_p50": 123,
+      "plan": []
+    },
+    {
+      "size": 100000,
+      "phase": "before",
+      "query": "invoice_list",
+      "measurement": "local HTTP Express + real local D1, including auth and creation safeguards",
+      "samples": 25,
+      "p50_ms": 27.39,
+      "p95_ms": 32.71,
+      "rows_read": "See corresponding SQL/trigger measurement; no aggregate D1 meta exposed by API"
+    },
+    {
+      "size": 100000,
+      "phase": "before",
+      "query": "customer_date",
+      "measurement": "local HTTP Express + real local D1, including auth and creation safeguards",
+      "samples": 25,
+      "p50_ms": 30.98,
+      "p95_ms": 38.88,
+      "rows_read": "See corresponding SQL/trigger measurement; no aggregate D1 meta exposed by API"
+    },
+    {
+      "size": 100000,
+      "phase": "before",
+      "query": "driver",
+      "measurement": "local HTTP Express + real local D1, including auth and creation safeguards",
+      "samples": 25,
+      "p50_ms": 27.87,
+      "p95_ms": 31.9,
+      "rows_read": "See corresponding SQL/trigger measurement; no aggregate D1 meta exposed by API"
+    },
+    {
+      "size": 100000,
+      "phase": "before",
+      "query": "combined",
+      "measurement": "local HTTP Express + real local D1, including auth and creation safeguards",
+      "samples": 25,
+      "p50_ms": 33.39,
+      "p95_ms": 40.89,
+      "rows_read": "See corresponding SQL/trigger measurement; no aggregate D1 meta exposed by API"
+    },
+    {
+      "size": 100000,
+      "phase": "before",
+      "query": "detail",
+      "measurement": "local HTTP Express + real local D1, including auth and creation safeguards",
+      "samples": 25,
+      "p50_ms": 16.43,
+      "p95_ms": 21.42,
+      "rows_read": "See corresponding SQL/trigger measurement; no aggregate D1 meta exposed by API"
+    },
+    {
+      "size": 100000,
+      "phase": "before",
+      "query": "quantity",
+      "measurement": "local HTTP Express + real local D1, including auth and creation safeguards",
+      "samples": 25,
+      "p50_ms": 13.06,
+      "p95_ms": 21.34,
+      "rows_read": "See corresponding SQL/trigger measurement; no aggregate D1 meta exposed by API"
+    },
+    {
+      "size": 100000,
+      "phase": "before",
+      "query": "audit",
+      "measurement": "local HTTP Express + real local D1, including auth and creation safeguards",
+      "samples": 25,
+      "p50_ms": 26.4,
+      "p95_ms": 33.1,
+      "rows_read": "See corresponding SQL/trigger measurement; no aggregate D1 meta exposed by API"
+    },
+    {
+      "size": 100000,
+      "phase": "before",
+      "query": "create",
+      "measurement": "local HTTP Express + real local D1, including auth and creation safeguards",
+      "samples": 25,
+      "p50_ms": 59.52,
+      "p95_ms": 74.19,
+      "rows_read": "See corresponding SQL/trigger measurement; no aggregate D1 meta exposed by API"
+    },
+    {
+      "size": 100000,
+      "phase": "after",
+      "query": "invoice_list",
+      "samples": 25,
+      "p50_ms": 5.26,
+      "p95_ms": 6.03,
+      "p50_sql_ms": 0,
+      "rows_read_p50": 21,
+      "rows_written_p50": 0,
+      "plan": [
+        "SCAN invoices USING INDEX invoice_date"
+      ]
+    },
+    {
+      "size": 100000,
+      "phase": "after",
+      "query": "customer_date",
+      "samples": 25,
+      "p50_ms": 5.81,
+      "p95_ms": 6.84,
+      "p50_sql_ms": 0,
+      "rows_read_p50": 21,
+      "rows_written_p50": 0,
+      "plan": [
+        "SEARCH invoices USING INDEX invoice_customer_order (customer_id=? AND date>? AND date<?)"
+      ]
+    },
+    {
+      "size": 100000,
+      "phase": "after",
+      "query": "driver",
+      "samples": 25,
+      "p50_ms": 6.2,
+      "p95_ms": 8.96,
+      "p50_sql_ms": 0,
+      "rows_read_p50": 21,
+      "rows_written_p50": 0,
+      "plan": [
+        "SEARCH invoices USING INDEX invoice_driver (driver_id=?)"
+      ]
+    },
+    {
+      "size": 100000,
+      "phase": "after",
+      "query": "combined",
+      "samples": 25,
+      "p50_ms": 5.11,
+      "p95_ms": 6.33,
+      "p50_sql_ms": 0,
+      "rows_read_p50": 21,
+      "rows_written_p50": 0,
+      "plan": [
+        "SEARCH invoices USING INDEX invoice_customer_driver_order (customer_id=? AND driver_id=? AND date>? AND date<?)"
+      ]
+    },
+    {
+      "size": 100000,
+      "phase": "after",
+      "query": "date_range",
+      "samples": 25,
+      "p50_ms": 5.58,
+      "p95_ms": 7.02,
+      "p50_sql_ms": 0,
+      "rows_read_p50": 21,
+      "rows_written_p50": 0,
+      "plan": [
+        "SEARCH invoices USING INDEX invoice_date (date>? AND date<?)"
+      ]
+    },
+    {
+      "size": 100000,
+      "phase": "after",
+      "query": "deep_page",
+      "samples": 25,
+      "p50_ms": 5.32,
+      "p95_ms": 6.39,
+      "p50_sql_ms": 0,
+      "rows_read_p50": 1021,
+      "rows_written_p50": 0,
+      "plan": [
+        "SEARCH invoices USING INDEX invoice_date (date<?)"
+      ]
+    },
+    {
+      "size": 100000,
+      "phase": "after",
+      "query": "detail",
+      "samples": 25,
+      "p50_ms": 5.41,
+      "p95_ms": 8.08,
+      "p50_sql_ms": 0,
+      "rows_read_p50": 1,
+      "rows_written_p50": 0,
+      "plan": [
+        "SEARCH invoices USING INTEGER PRIMARY KEY (rowid=?)"
+      ]
+    },
+    {
+      "size": 100000,
+      "phase": "after",
+      "query": "number_lookup",
+      "samples": 25,
+      "p50_ms": 5.44,
+      "p95_ms": 7.68,
+      "p50_sql_ms": 0,
+      "rows_read_p50": 1,
+      "rows_written_p50": 0,
+      "plan": [
+        "SEARCH invoices USING INTEGER PRIMARY KEY (rowid=?)"
+      ]
+    },
+    {
+      "size": 100000,
+      "phase": "after",
+      "query": "quantity",
+      "samples": 25,
+      "p50_ms": 4.71,
+      "p95_ms": 5.94,
+      "p50_sql_ms": 0,
+      "rows_read_p50": 1,
+      "rows_written_p50": 0,
+      "plan": [
+        "SEARCH invoices USING INDEX invoice_group (customer_id=? AND date=?)"
+      ]
+    },
+    {
+      "size": 100000,
+      "phase": "after",
+      "query": "audit",
+      "samples": 25,
+      "p50_ms": 4.62,
+      "p95_ms": 6.88,
+      "p50_sql_ms": 0,
+      "rows_read_p50": 2,
+      "rows_written_p50": 0,
+      "plan": [
+        "SEARCH audit_logs USING INDEX audit_invoice (invoice_id=?)"
+      ]
+    },
+    {
+      "size": 100000,
+      "phase": "after",
+      "query": "create",
+      "samples": 25,
+      "p50_ms": 5.77,
+      "p95_ms": 6.96,
+      "p50_sql_ms": 1,
+      "rows_read_p50": 250,
+      "rows_written_p50": 14,
+      "plan": []
+    },
+    {
+      "size": 100000,
+      "phase": "after",
+      "query": "invoice_list",
+      "measurement": "local HTTP Express + real local D1, including auth and creation safeguards",
+      "samples": 25,
+      "p50_ms": 13.26,
+      "p95_ms": 16.84,
+      "rows_read": "See corresponding SQL/trigger measurement; no aggregate D1 meta exposed by API"
+    },
+    {
+      "size": 100000,
+      "phase": "after",
+      "query": "customer_date",
+      "measurement": "local HTTP Express + real local D1, including auth and creation safeguards",
+      "samples": 25,
+      "p50_ms": 14.84,
+      "p95_ms": 19.03,
+      "rows_read": "See corresponding SQL/trigger measurement; no aggregate D1 meta exposed by API"
+    },
+    {
+      "size": 100000,
+      "phase": "after",
+      "query": "driver",
+      "measurement": "local HTTP Express + real local D1, including auth and creation safeguards",
+      "samples": 25,
+      "p50_ms": 13.43,
+      "p95_ms": 16.29,
+      "rows_read": "See corresponding SQL/trigger measurement; no aggregate D1 meta exposed by API"
+    },
+    {
+      "size": 100000,
+      "phase": "after",
+      "query": "combined",
+      "measurement": "local HTTP Express + real local D1, including auth and creation safeguards",
+      "samples": 25,
+      "p50_ms": 13.5,
+      "p95_ms": 15.66,
+      "rows_read": "See corresponding SQL/trigger measurement; no aggregate D1 meta exposed by API"
+    },
+    {
+      "size": 100000,
+      "phase": "after",
+      "query": "detail",
+      "measurement": "local HTTP Express + real local D1, including auth and creation safeguards",
+      "samples": 25,
+      "p50_ms": 15.79,
+      "p95_ms": 20.49,
+      "rows_read": "See corresponding SQL/trigger measurement; no aggregate D1 meta exposed by API"
+    },
+    {
+      "size": 100000,
+      "phase": "after",
+      "query": "quantity",
+      "measurement": "local HTTP Express + real local D1, including auth and creation safeguards",
+      "samples": 25,
+      "p50_ms": 13.07,
+      "p95_ms": 15.46,
+      "rows_read": "See corresponding SQL/trigger measurement; no aggregate D1 meta exposed by API"
+    },
+    {
+      "size": 100000,
+      "phase": "after",
+      "query": "audit",
+      "measurement": "local HTTP Express + real local D1, including auth and creation safeguards",
+      "samples": 25,
+      "p50_ms": 11.71,
+      "p95_ms": 16.51,
+      "rows_read": "See corresponding SQL/trigger measurement; no aggregate D1 meta exposed by API"
+    },
+    {
+      "size": 100000,
+      "phase": "after",
+      "query": "create",
+      "measurement": "local HTTP Express + real local D1, including auth and creation safeguards",
+      "samples": 25,
+      "p50_ms": 42.94,
+      "p95_ms": 48.07,
+      "rows_read": "See corresponding SQL/trigger measurement; no aggregate D1 meta exposed by API"
+    },
+    {
+      "size": 100000,
+      "phase": "after",
+      "query": "initial_exact_count",
+      "elapsed_ms": 5.240943999997398,
+      "rows_read": 100000,
+      "plan": [
+        "SCAN invoices USING COVERING INDEX invoice_driver"
+      ]
+    }
+  ]
+}

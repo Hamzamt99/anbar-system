@@ -253,18 +253,14 @@ export function invoiceRoutes(db) {
     if (req.body && Object.keys(req.body).length)
       throw fail(400, "البيانات غير صحيحة");
     const uid = parse(id, req.params.id);
-    const x = await db
+    const row = await db
       .prepare(
-        "UPDATE invoices SET audit_actor_id=?,audit_actor_email=?,version=version+1,printed_at=COALESCE(printed_at,strftime('%Y-%m-%dT%H:%M:%fZ','now')) WHERE id=?",
+        "UPDATE invoices SET audit_actor_id=?,audit_actor_email=?,version=version+1,printed_at=COALESCE(printed_at,strftime('%Y-%m-%dT%H:%M:%fZ','now')) WHERE id=? RETURNING *",
       )
       .bind(req.user.id, req.user.email, uid)
-      .run();
-    if (!x.meta.changes) throw fail(404, "الفاتورة غير موجودة");
-    res.json({
-      data: serialize(
-        await db.prepare("SELECT * FROM invoices WHERE id=?").bind(uid).first(),
-      ),
-    });
+      .first();
+    if (!row) throw fail(404, "الفاتورة غير موجودة");
+    res.json({ data: serialize(row) });
   });
   return r;
 }

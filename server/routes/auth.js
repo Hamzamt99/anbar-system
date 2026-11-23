@@ -15,15 +15,11 @@ export function authRoutes(db) {
       `${(req.app.locals.production ? req.headers["cf-connecting-ip"] : req.socket.remoteAddress) || "unknown"}:${v.email}`,
     );
     const now = Date.now();
-    await db
+    const attempt = await db
       .prepare(
-        "INSERT INTO login_attempts(key,attempts,reset_at) VALUES(?,1,?) ON CONFLICT(key) DO UPDATE SET attempts=CASE WHEN reset_at<? THEN 1 ELSE attempts+1 END,reset_at=CASE WHEN reset_at<? THEN ? ELSE reset_at END",
+        "INSERT INTO login_attempts(key,attempts,reset_at) VALUES(?,1,?) ON CONFLICT(key) DO UPDATE SET attempts=CASE WHEN reset_at<? THEN 1 ELSE attempts+1 END,reset_at=CASE WHEN reset_at<? THEN ? ELSE reset_at END RETURNING attempts",
       )
       .bind(key, now + 900000, now, now, now + 900000)
-      .run();
-    const attempt = await db
-      .prepare("SELECT attempts FROM login_attempts WHERE key=?")
-      .bind(key)
       .first();
     if (attempt.attempts > 10)
       throw fail(429, "محاولات كثيرة، يرجى المحاولة بعد 15 دقيقة");

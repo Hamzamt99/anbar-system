@@ -9,7 +9,8 @@ const refs = [
   ["mixer", "mixers"],
 ];
 export async function snapshots(db, v, old) {
-  const names = {};
+  const names = {},
+    lookups = [];
   for (const [key, table] of refs) {
     const value = v[`${key}_id`];
     if (old && value === old[`${key}_id`]) {
@@ -20,13 +21,22 @@ export async function snapshots(db, v, old) {
       names[`${key}_name`] = "";
       continue;
     }
-    const row = await db
-      .prepare(`SELECT name FROM ${table} WHERE id=? AND deleted_at IS NULL`)
-      .bind(value)
-      .first();
-    if (!row)
-      throw fail(400, "أحد السجلات المختارة غير موجود، يرجى إعادة الاختيار");
-    names[`${key}_name`] = row.name;
+    lookups.push({
+      key,
+      statement: db
+        .prepare(`SELECT name FROM ${table} WHERE id=? AND deleted_at IS NULL`)
+        .bind(value),
+    });
+  }
+  // One D1 round trip for all changed references; unchanged snapshots stay intact.
+  if (lookups.length) {
+    const results = await db.batch(lookups.map(({ statement }) => statement));
+    for (const [index, { key }] of lookups.entries()) {
+      const row = results[index].results[0];
+      if (!row)
+        throw fail(400, "أحد السجلات المختارة غير موجود، يرجى إعادة الاختيار");
+      names[`${key}_name`] = row.name;
+    }
   }
   return names;
 }

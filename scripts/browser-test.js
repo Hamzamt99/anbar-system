@@ -1,3 +1,4 @@
+import { checkActionResponsiveness } from "./action-checks.js";
 import { checkDropdownLoading } from "./dropdown-checks.js";
 import { checkWebKitMobile } from "./webkit-mobile-checks.js";
 import { spawn, spawnSync } from "node:child_process";
@@ -425,6 +426,7 @@ try {
   await page.goto(base + "/audit-logs");
   await page.waitForURL("**/invoices");
   await verifyReceiptPrint(browser, { base, password, out });
+  await checkActionResponsiveness(browser, { base, password });
   assert.deepEqual(errors, []);
   assert.deepEqual(policyErrors, []);
   console.log(

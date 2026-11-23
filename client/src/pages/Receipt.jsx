@@ -17,15 +17,25 @@ export default function Receipt() {
     printed = useRef(false);
   useEffect(() => {
     let alive = true;
-    api("/invoices/" + id)
+    const controller = new AbortController();
+    setRow(null);
+    setError("");
+    printed.current = false;
+    api("/invoices/" + id, { signal: controller.signal })
       .then((r) => alive && setRow(r.data))
       .catch((e) => alive && setError(e.message));
     return () => {
       alive = false;
+      controller.abort();
     };
   }, [id]);
   useEffect(() => {
-    if (row && location.search.includes("print=1") && !printed.current) {
+    if (
+      row &&
+      String(row.id) === id &&
+      location.search.includes("print=1") &&
+      !printed.current
+    ) {
       printed.current = true;
       preparePrint()
         .then(() => window.print())

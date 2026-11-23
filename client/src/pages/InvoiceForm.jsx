@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { api, masterTypes, amount } from "../api";
+import { api, amount } from "../api";
 import { addDepartureOffset } from "../../../shared/time.js";
 import { useAuth } from "../main";
 import { Title, Field, SearchSelect, ErrorBox } from "../components/UI";
@@ -73,13 +73,14 @@ export default function InvoiceForm() {
   useEffect(() => {
     let alive = true;
     setLoading(true);
-    Promise.all([
-      Promise.all(masterTypes.map(async ([key]) => [key, []])),
-      id ? api("/invoices/" + id) : Promise.resolve(null),
-    ])
-      .then(([list, result]) => {
+    const controller = new AbortController();
+    (id
+      ? api("/invoices/" + id, { signal: controller.signal })
+      : Promise.resolve(null)
+    )
+      .then((result) => {
         if (!alive) return;
-        const data = Object.fromEntries(list);
+        const data = Object.fromEntries(refs.map(([, path]) => [path, []]));
         if (result) {
           const row = result.data;
           setVersion(row.version);
@@ -116,6 +117,7 @@ export default function InvoiceForm() {
       .finally(() => alive && setLoading(false));
     return () => {
       alive = false;
+      controller.abort();
     };
   }, [id]);
   useEffect(() => {
@@ -124,13 +126,16 @@ export default function InvoiceForm() {
       setPrevious(0);
       return;
     }
+    const controller = new AbortController();
     api(
       `/invoices/quantity?customer_id=${form.customer_id}&date=${form.date}${id ? "&exclude_id=" + id : ""}`,
+      { signal: controller.signal },
     )
       .then((r) => alive && setPrevious(r.data))
       .catch((e) => alive && setError(e.message));
     return () => {
       alive = false;
+      controller.abort();
     };
   }, [form.customer_id, form.date, id]);
   const change = (k) => (e) => {
