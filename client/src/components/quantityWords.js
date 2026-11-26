@@ -73,5 +73,15 @@ export function quantityWords(value) {
   const scaled = Math.round(Number(value) * 1000),
     n = Math.floor(scaled / 1000),
     r = scaled % 1000;
-  return `${n ? whole(n) : "صفر"}${r ? " و" + whole(r) + " جزء من ألف" : ""} متر مكعب`;
+  const fractions = { 250: "ربع", 500: "نصف", 750: "ثلاثة أرباع" };
+  const integer = n ? whole(n) : "صفر";
+  if (!r) return `${integer} متر مكعب`;
+  if (fractions[r]) return `${n ? integer + " و" : ""}${fractions[r]} متر مكعب`;
+  const decimal = String(r)
+    .padStart(3, "0")
+    .replace(/0+$/, "")
+    .split("")
+    .map((digit) => (digit === "0" ? "صفر" : units[Number(digit)]))
+    .join(" ");
+  return `${integer} فاصلة ${decimal} متر مكعب`;
 }
